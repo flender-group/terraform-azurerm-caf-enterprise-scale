@@ -22,16 +22,18 @@ resource "azurerm_management_group_policy_assignment" "enterprise_scale" {
   # ensures the block is only created when this value
   # is specified in the source template
   dynamic "identity" {
-    for_each = {
-      for ik, iv in try(each.value.template.identity, local.empty_map) :
-      ik => iv
-      if lower(iv) == "systemassigned"
+    for_each = (try(each.value.template.identity.type, null) == "UserAssigned" ? { "yes" = true } : {})
+    content {
+      type         = "UserAssigned"
+      identity_ids = [each.value.template.identity.userAssignedIdentities]
     }
+  }
+  dynamic "identity" {
+    for_each = (try(each.value.template.identity.type, null) == "SystemAssigned" ? { "yes" = true } : {})
     content {
       type = "SystemAssigned"
     }
   }
-
   # Set explicit dependency on Management Group, Policy Definition and Policy Set Definition deployments
   depends_on = [
     time_sleep.after_azurerm_management_group,
