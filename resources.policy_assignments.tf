@@ -22,16 +22,32 @@ resource "azurerm_management_group_policy_assignment" "enterprise_scale" {
   # ensures the block is only created when this value
   # is specified in the source template
   dynamic "identity" {
-    for_each = {
-      for ik, iv in try(each.value.template.identity, local.empty_map) :
-      ik => iv
-      if lower(iv) == "systemassigned"
+    for_each = (try(each.value.template.identity.type, null) == "UserAssigned" ? { "yes" = true } : {})
+    content {
+      type         = "UserAssigned"
+      identity_ids = [each.value.template.identity.userAssignedIdentities]
     }
+  }
+  dynamic "identity" {
+    for_each = (try(each.value.template.identity.type, null) == "SystemAssigned" ? { "yes" = true } : {})
     content {
       type = "SystemAssigned"
     }
   }
-
+  dynamic "resource_selectors" {
+    for_each = try({ for i, resourceSelector in each.value.template.properties.resourceSelectors : i => resourceSelector }, local.empty_map)
+    content {
+      name = resource_selectors.value.name
+      dynamic "selectors" {
+        for_each = try({ for i, selector in resource_selectors.value.selectors : i => selector }, local.empty_map)
+        content {
+          in     = try(selectors.value.in, local.empty_list)
+          kind   = selectors.value.kind
+          not_in = try(selectors.value.not_in, local.empty_list)
+        }
+      }
+    }
+  }
   # Set explicit dependency on Management Group, Policy Definition and Policy Set Definition deployments
   depends_on = [
     time_sleep.after_azurerm_management_group,
