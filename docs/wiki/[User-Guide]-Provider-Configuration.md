@@ -1,6 +1,7 @@
+<!-- markdownlint-disable first-line-h1 -->
 ## Overview
 
-As of release `v0.4.0`, the [Terraform Module for Cloud Adoption Framework Enterprise-scale][terraform-registry-caf-enterprise-scale] now uses multiple provider aliases to allow resources to be deployed directly to the intended Subscription, without the need to specify multiple instances of the module.
+The [Azure landing zones Terraform module][terraform-registry-caf-enterprise-scale] uses multiple provider aliases to allow resources to be deployed directly to the intended Subscription, without the need to specify multiple instances of the module.
 
 This change is intended to simplify deployments using a single pipeline to create all resources, as it is no longer necessary to share the configuration inputs across multiple instances of the module to achieve consistency between the resources created, and associated policies.
 
@@ -53,7 +54,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = ">= 2.77.0"
+      version = ">= 3.0.2"
     }
   }
 }
@@ -69,7 +70,7 @@ provider "azurerm" {
 
 module "caf-enterprise-scale" {
   source  = "Azure/caf-enterprise-scale/azurerm"
-  version = "1.1.3"
+  version = "2.4.1"
 
   providers = {
     azurerm              = azurerm
@@ -81,7 +82,7 @@ module "caf-enterprise-scale" {
 }
 ```
 
-For more detailed instructions, follow the [next steps](#next-steps) listed below or go straight to our [Examples](./Examples).
+For more detailed instructions, follow the [next steps](#next-steps) listed below or go straight to our [Examples](Examples).
 
 ### Multi-Subscription deployment
 
@@ -96,7 +97,7 @@ You must be authenticated to the Subscription where you want each set of resourc
 - When setting `deploy_management_resources = true`, you must also ensure you map the `azurerm.management` provider to authenticate against the same Subscription as specified in `subscription_id_management`.
 
 Although this may bring additional complexity to the module, this also enables the module to deploy resources across multiple Subscriptions.
-This is an important part of the [Cloud Adoption Framework enterprise-scale landing zone architecture][ESLZ-Architecture].
+This is an important part of the [Azure landing zones architecture][ESLZ-Architecture].
 
 Details of how to [configure authentication settings][authenticating_to_azure] can be found in the AzureRM Provider documentation.
 
@@ -111,7 +112,7 @@ terraform {
   required_providers {
     azurerm = {
       source                = "hashicorp/azurerm"
-      version               = ">= 2.77.0"
+      version               = ">= 3.0.2"
       configuration_aliases = [
         azurerm.connectivity,
         azurerm.management,
@@ -149,7 +150,7 @@ provider "azurerm" {
 
 module "caf-enterprise-scale" {
   source  = "Azure/caf-enterprise-scale/azurerm"
-  version = "1.1.3"
+  version = "2.4.1"
 
   providers = {
     azurerm              = azurerm
@@ -207,7 +208,7 @@ data "azurerm_client_config" "connectivity" {
 # Map each module provider to their corresponding `azurerm` provider using the providers input object
 module "enterprise_scale" {
   source  = "Azure/caf-enterprise-scale/azurerm"
-  version = "1.1.3"
+  version = "2.4.1"
 
   providers = {
     azurerm              = azurerm
@@ -233,7 +234,7 @@ module "enterprise_scale" {
 }
 ```
 
-For more detailed instructions, follow the [next steps](#next-steps) listed below or go straight to our [Examples](./Examples).
+For more detailed instructions, follow the [next steps](#next-steps) listed below or go straight to our [Examples](Examples).
 
 ## Next steps
 
@@ -243,14 +244,14 @@ Learn how to use the [Module Variables](%5BUser-Guide%5D-Module-Variables) to cu
 [//]: # "INSERT LINK LABELS BELOW"
 [//]: # "************************"
 
-[ESLZ-Architecture]: https://docs.microsoft.com/azure/cloud-adoption-framework/ready/enterprise-scale/architecture "Cloud Adoption Framework enterprise-scale landing zone architecture"
+[ESLZ-Architecture]: https://docs.microsoft.com/azure/cloud-adoption-framework/ready/enterprise-scale/architecture "Azure landing zones architecture"
 
-[terraform-registry-caf-enterprise-scale]: https://registry.terraform.io/modules/Azure/caf-enterprise-scale/azurerm/latest "Terraform Registry: Terraform Module for Cloud Adoption Framework Enterprise-scale"
+[terraform-registry-caf-enterprise-scale]: https://registry.terraform.io/modules/Azure/caf-enterprise-scale/azurerm/latest "Terraform Registry: Azure landing zones Terraform module"
 [authenticating_to_azure]:                 https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs#authenticating-to-azure "Terraform Registry: Azure Provider (Authenticating to Azure)"
 
-[wiki_core_resources]:                        ./%5BUser-Guide%5D-Core-Resources "Wiki - Core Resources"
-[wiki_management_resources]:                  ./%5BUser-Guide%5D-Management-Resources "Wiki - Management Resources"
-[wiki_connectivity_resources]:                ./%5BUser-Guide%5D-Connectivity-Resources "Wiki - Connectivity Resources"
-[wiki_identity_resources]:                    ./%5BUser-Guide%5D-Identity-Resources "Wiki - Identity Resources"
+[wiki_core_resources]:                        %5BUser-Guide%5D-Core-Resources "Wiki - Core Resources"
+[wiki_management_resources]:                  %5BUser-Guide%5D-Management-Resources "Wiki - Management Resources"
+[wiki_connectivity_resources]:                %5BUser-Guide%5D-Connectivity-Resources "Wiki - Connectivity Resources"
+[wiki_identity_resources]:                    %5BUser-Guide%5D-Identity-Resources "Wiki - Identity Resources"
 
 [azurerm_client_config]: https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/data-sources/client_config "Data Source: azurerm_client_config"

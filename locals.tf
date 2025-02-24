@@ -2,7 +2,7 @@
 # empty object types in the code
 locals {
   empty_list   = []
-  empty_map    = {}
+  empty_map    = tomap({})
   empty_string = ""
 }
 
@@ -37,9 +37,47 @@ locals {
     module.identity_resources.configuration.template_file_variables,
     module.management_resources.configuration.template_file_variables,
   )
-  default_location         = var.default_location
-  default_tags             = var.default_tags
-  disable_base_module_tags = var.disable_base_module_tags
+  default_location                = var.default_location
+  default_tags                    = var.default_tags
+  disable_base_module_tags        = var.disable_base_module_tags
+  disable_telemetry               = var.disable_telemetry
+  strict_subscription_association = var.strict_subscription_association
+}
+
+# The following locals are used to ensure non-null values
+# are assigned to each of the corresponding inputs for
+# correct processing in `lookup()` functions.
+#
+# We also need to ensure that each `???_resources_advanced`
+# local is handled as an `object()` rather than `map()` to
+# prevent `lookup()` errors when only partially specified
+# with attributes of a single type.
+#
+# This is achieved by merging an `object()` with multiple
+# types (`create_object`) to the input from `advanced`.
+#
+# For more information about this error, see:
+# https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/issues/227#issuecomment-1097623677
+locals {
+  enforcement_mode_default = {
+    enforcement_mode = null
+  }
+  create_object = {
+    # Technically only needs two object types to work.
+    add_bool   = true
+    add_string = local.empty_string
+    add_list   = local.empty_list
+    add_map    = local.empty_map
+    add_null   = null
+  }
+  connectivity_resources_advanced = merge(
+    local.create_object,
+    coalesce(local.configure_connectivity_resources.advanced, local.empty_map)
+  )
+  management_resources_advanced = merge(
+    local.create_object,
+    coalesce(local.configure_management_resources.advanced, local.empty_map)
+  )
 }
 
 # The following locals are used to define a set of module
@@ -48,7 +86,7 @@ locals {
 # tag blocks for each sub-module
 locals {
   base_module_tags = {
-    deployedBy = "terraform/azure/caf-enterprise-scale/v1.1.3"
+    deployedBy = "terraform/azure/caf-enterprise-scale"
   }
   connectivity_resources_tags = merge(
     local.disable_base_module_tags ? local.empty_map : local.base_module_tags,
@@ -109,19 +147,19 @@ locals {
   default_create_duration_delay  = "30s"
   default_destroy_duration_delay = "0s"
   create_duration_delay = {
-    after_azurerm_management_group      = try(var.create_duration_delay["azurerm_management_group"], local.default_create_duration_delay)
-    after_azurerm_policy_assignment     = try(var.create_duration_delay["azurerm_policy_assignment"], local.default_create_duration_delay)
-    after_azurerm_policy_definition     = try(var.create_duration_delay["azurerm_policy_definition"], local.default_create_duration_delay)
-    after_azurerm_policy_set_definition = try(var.create_duration_delay["azurerm_policy_set_definition"], local.default_create_duration_delay)
-    after_azurerm_role_assignment       = try(var.create_duration_delay["azurerm_role_assignment"], local.default_create_duration_delay)
-    after_azurerm_role_definition       = try(var.create_duration_delay["azurerm_role_definition"], local.default_create_duration_delay)
+    after_azurerm_management_group      = lookup(var.create_duration_delay, "azurerm_management_group", local.default_create_duration_delay)
+    after_azurerm_policy_assignment     = lookup(var.create_duration_delay, "azurerm_policy_assignment", local.default_create_duration_delay)
+    after_azurerm_policy_definition     = lookup(var.create_duration_delay, "azurerm_policy_definition", local.default_create_duration_delay)
+    after_azurerm_policy_set_definition = lookup(var.create_duration_delay, "azurerm_policy_set_definition", local.default_create_duration_delay)
+    after_azurerm_role_assignment       = lookup(var.create_duration_delay, "azurerm_role_assignment", local.default_create_duration_delay)
+    after_azurerm_role_definition       = lookup(var.create_duration_delay, "azurerm_role_definition", local.default_create_duration_delay)
   }
   destroy_duration_delay = {
-    after_azurerm_management_group      = try(var.destroy_duration_delay["azurerm_management_group"], local.default_destroy_duration_delay)
-    after_azurerm_policy_assignment     = try(var.destroy_duration_delay["azurerm_policy_assignment"], local.default_destroy_duration_delay)
-    after_azurerm_policy_definition     = try(var.destroy_duration_delay["azurerm_policy_definition"], local.default_destroy_duration_delay)
-    after_azurerm_policy_set_definition = try(var.destroy_duration_delay["azurerm_policy_set_definition"], local.default_destroy_duration_delay)
-    after_azurerm_role_assignment       = try(var.destroy_duration_delay["azurerm_role_assignment"], local.default_destroy_duration_delay)
-    after_azurerm_role_definition       = try(var.destroy_duration_delay["azurerm_role_definition"], local.default_destroy_duration_delay)
+    after_azurerm_management_group      = lookup(var.destroy_duration_delay, "azurerm_management_group", local.default_destroy_duration_delay)
+    after_azurerm_policy_assignment     = lookup(var.destroy_duration_delay, "azurerm_policy_assignment", local.default_destroy_duration_delay)
+    after_azurerm_policy_definition     = lookup(var.destroy_duration_delay, "azurerm_policy_definition", local.default_destroy_duration_delay)
+    after_azurerm_policy_set_definition = lookup(var.destroy_duration_delay, "azurerm_policy_set_definition", local.default_destroy_duration_delay)
+    after_azurerm_role_assignment       = lookup(var.destroy_duration_delay, "azurerm_role_assignment", local.default_destroy_duration_delay)
+    after_azurerm_role_definition       = lookup(var.destroy_duration_delay, "azurerm_role_definition", local.default_destroy_duration_delay)
   }
 }

@@ -78,31 +78,32 @@ variable "configure_management_resources" {
       log_analytics = object({
         enabled = bool
         config = object({
-          retention_in_days                           = number
-          enable_monitoring_for_arc                   = bool
-          enable_monitoring_for_vm                    = bool
-          enable_monitoring_for_vmss                  = bool
-          enable_solution_for_agent_health_assessment = bool
-          enable_solution_for_anti_malware            = bool
-          enable_solution_for_azure_activity          = bool
-          enable_solution_for_change_tracking         = bool
-          enable_solution_for_service_map             = bool
-          enable_solution_for_sql_assessment          = bool
-          enable_solution_for_updates                 = bool
-          enable_solution_for_vm_insights             = bool
-          enable_sentinel                             = bool
+          retention_in_days                                 = number
+          enable_monitoring_for_arc                         = bool
+          enable_monitoring_for_vm                          = bool
+          enable_monitoring_for_vmss                        = bool
+          enable_solution_for_agent_health_assessment       = bool
+          enable_solution_for_anti_malware                  = bool
+          enable_solution_for_azure_activity                = bool
+          enable_solution_for_change_tracking               = bool
+          enable_solution_for_service_map                   = bool
+          enable_solution_for_sql_assessment                = bool
+          enable_solution_for_sql_vulnerability_assessment  = bool
+          enable_solution_for_sql_advanced_threat_detection = bool
+          enable_solution_for_updates                       = bool
+          enable_solution_for_vm_insights                   = bool
+          enable_sentinel                                   = bool
         })
       })
       security_center = object({
         enabled = bool
         config = object({
           email_security_contact             = string
-          enable_defender_for_acr            = bool
           enable_defender_for_app_services   = bool
           enable_defender_for_arm            = bool
+          enable_defender_for_containers     = bool
           enable_defender_for_dns            = bool
           enable_defender_for_key_vault      = bool
-          enable_defender_for_kubernetes     = bool
           enable_defender_for_oss_databases  = bool
           enable_defender_for_servers        = bool
           enable_defender_for_sql_servers    = bool
@@ -121,31 +122,32 @@ variable "configure_management_resources" {
       log_analytics = {
         enabled = true
         config = {
-          retention_in_days                           = 30
-          enable_monitoring_for_arc                   = true
-          enable_monitoring_for_vm                    = true
-          enable_monitoring_for_vmss                  = true
-          enable_solution_for_agent_health_assessment = true
-          enable_solution_for_anti_malware            = true
-          enable_solution_for_azure_activity          = true
-          enable_solution_for_change_tracking         = true
-          enable_solution_for_service_map             = true
-          enable_solution_for_sql_assessment          = true
-          enable_solution_for_updates                 = true
-          enable_solution_for_vm_insights             = true
-          enable_sentinel                             = true
+          retention_in_days                                 = 30
+          enable_monitoring_for_arc                         = true
+          enable_monitoring_for_vm                          = true
+          enable_monitoring_for_vmss                        = true
+          enable_solution_for_agent_health_assessment       = true
+          enable_solution_for_anti_malware                  = true
+          enable_solution_for_azure_activity                = true
+          enable_solution_for_change_tracking               = true
+          enable_solution_for_service_map                   = true
+          enable_solution_for_sql_assessment                = true
+          enable_solution_for_sql_vulnerability_assessment  = true
+          enable_solution_for_sql_advanced_threat_detection = true
+          enable_solution_for_updates                       = true
+          enable_solution_for_vm_insights                   = true
+          enable_sentinel                                   = true
         }
       }
       security_center = {
         enabled = true
         config = {
           email_security_contact             = "security_contact@replace_me"
-          enable_defender_for_acr            = true
           enable_defender_for_app_services   = true
           enable_defender_for_arm            = true
+          enable_defender_for_containers     = true
           enable_defender_for_dns            = true
           enable_defender_for_key_vault      = true
-          enable_defender_for_kubernetes     = true
           enable_defender_for_oss_databases  = true
           enable_defender_for_servers        = true
           enable_defender_for_sql_servers    = true
@@ -202,6 +204,23 @@ variable "deploy_connectivity_resources" {
   default     = false
 }
 
+# Notes for the `configure_connectivity_resources` variable:
+#
+# `settings.hub_network_virtual_network_gateway.config.address_prefix`
+#   - Only support adding a single address prefix for GatewaySubnet subnet
+#
+# `settings.hub_network_virtual_network_gateway.config.gateway_sku_expressroute`
+#   - If specified, will deploy the ExpressRoute gateway into the GatewaySubnet subnet
+#
+# `settings.hub_network_virtual_network_gateway.config.gateway_sku_vpn`
+#   - If specified, will deploy the VPN gateway into the GatewaySubnet subnet
+#
+# `settings.hub_network_virtual_network_gateway.config.advanced_vpn_settings.private_ip_address_allocation`
+#   - Valid options are "", "Static" or "Dynamic". Will set `private_ip_address_enabled` and `private_ip_address_allocation` as needed.
+#
+# `settings.azure_firewall.config.address_prefix`
+# - Only support adding a single address prefix for AzureFirewallManagementSubnet subnet
+
 variable "configure_connectivity_resources" {
   type = object({
     settings = object({
@@ -225,16 +244,69 @@ variable "configure_connectivity_resources" {
             virtual_network_gateway = object({
               enabled = bool
               config = object({
-                address_prefix           = string # Only support adding a single address prefix for GatewaySubnet subnet
-                gateway_sku_expressroute = string # If specified, will deploy the ExpressRoute gateway into the GatewaySubnet subnet
-                gateway_sku_vpn          = string # If specified, will deploy the VPN gateway into the GatewaySubnet subnet
+                address_prefix           = string
+                gateway_sku_expressroute = string
+                gateway_sku_vpn          = string
+                advanced_vpn_settings = object({
+                  enable_bgp                       = bool
+                  active_active                    = bool
+                  private_ip_address_allocation    = string
+                  default_local_network_gateway_id = string
+                  vpn_client_configuration = list(
+                    object({
+                      address_space = list(string)
+                      aad_tenant    = string
+                      aad_audience  = string
+                      aad_issuer    = string
+                      root_certificate = list(
+                        object({
+                          name             = string
+                          public_cert_data = string
+                        })
+                      )
+                      revoked_certificate = list(
+                        object({
+                          name             = string
+                          public_cert_data = string
+                        })
+                      )
+                      radius_server_address = string
+                      radius_server_secret  = string
+                      vpn_client_protocols  = list(string)
+                      vpn_auth_types        = list(string)
+                    })
+                  )
+                  bgp_settings = list(
+                    object({
+                      asn         = number
+                      peer_weight = number
+                      peering_addresses = list(
+                        object({
+                          ip_configuration_name = string
+                          apipa_addresses       = list(string)
+                        })
+                      )
+                    })
+                  )
+                  custom_route = list(
+                    object({
+                      address_prefixes = list(string)
+                    })
+                  )
+                })
               })
             })
             azure_firewall = object({
               enabled = bool
               config = object({
-                address_prefix   = string # Only support adding a single address prefix for AzureFirewallManagementSubnet subnet
-                enable_dns_proxy = bool
+                address_prefix                = string
+                enable_dns_proxy              = bool
+                dns_servers                   = list(string)
+                sku_tier                      = string
+                base_policy_id                = string
+                private_ip_ranges             = list(string)
+                threat_intelligence_mode      = string
+                threat_intelligence_allowlist = list(string)
                 availability_zones = object({
                   zone_1 = bool
                   zone_2 = bool
@@ -244,10 +316,74 @@ variable "configure_connectivity_resources" {
             })
             spoke_virtual_network_resource_ids      = list(string)
             enable_outbound_virtual_network_peering = bool
+            enable_hub_network_mesh_peering         = bool
           })
         })
       )
-      vwan_hub_networks = list(object({}))
+      vwan_hub_networks = list(
+        object({
+          enabled = bool
+          config = object({
+            address_prefix = string
+            location       = string
+            sku            = string
+            routes = list(
+              object({
+                address_prefixes    = list(string)
+                next_hop_ip_address = string
+              })
+            )
+            expressroute_gateway = object({
+              enabled = bool
+              config = object({
+                scale_unit = number
+              })
+            })
+            vpn_gateway = object({
+              enabled = bool
+              config = object({
+                bgp_settings = list(
+                  object({
+                    asn         = number
+                    peer_weight = number
+                    instance_0_bgp_peering_address = list(
+                      object({
+                        custom_ips = list(string)
+                      })
+                    )
+                    instance_1_bgp_peering_address = list(
+                      object({
+                        custom_ips = list(string)
+                      })
+                    )
+                  })
+                )
+                routing_preference = string
+                scale_unit         = number
+              })
+            })
+            azure_firewall = object({
+              enabled = bool
+              config = object({
+                enable_dns_proxy              = bool
+                dns_servers                   = list(string)
+                sku_tier                      = string
+                base_policy_id                = string
+                private_ip_ranges             = list(string)
+                threat_intelligence_mode      = string
+                threat_intelligence_allowlist = list(string)
+                availability_zones = object({
+                  zone_1 = bool
+                  zone_2 = bool
+                  zone_3 = bool
+                })
+              })
+            })
+            spoke_virtual_network_resource_ids = list(string)
+            enable_virtual_hub_connections     = bool
+          })
+        })
+      )
       ddos_protection_plan = object({
         enabled = bool
         config = object({
@@ -332,13 +468,28 @@ variable "configure_connectivity_resources" {
                 address_prefix           = "10.100.1.0/24"
                 gateway_sku_expressroute = "ErGw2AZ"
                 gateway_sku_vpn          = "VpnGw3"
+                advanced_vpn_settings = {
+                  enable_bgp                       = null
+                  active_active                    = null
+                  private_ip_address_allocation    = ""
+                  default_local_network_gateway_id = ""
+                  vpn_client_configuration         = []
+                  bgp_settings                     = []
+                  custom_route                     = []
+                }
               }
             }
             azure_firewall = {
               enabled = false
               config = {
-                address_prefix   = "10.100.0.0/24"
-                enable_dns_proxy = true
+                address_prefix                = "10.100.0.0/24"
+                enable_dns_proxy              = true
+                dns_servers                   = []
+                sku_tier                      = ""
+                base_policy_id                = ""
+                private_ip_ranges             = []
+                threat_intelligence_mode      = ""
+                threat_intelligence_allowlist = []
                 availability_zones = {
                   zone_1 = true
                   zone_2 = true
@@ -348,10 +499,54 @@ variable "configure_connectivity_resources" {
             }
             spoke_virtual_network_resource_ids      = []
             enable_outbound_virtual_network_peering = false
+            enable_hub_network_mesh_peering         = false
           }
         },
       ]
-      vwan_hub_networks = []
+      vwan_hub_networks = [
+        {
+          enabled = false
+          config = {
+            address_prefix = "10.200.0.0/22"
+            location       = ""
+            sku            = ""
+            routes         = []
+            expressroute_gateway = {
+              enabled = false
+              config = {
+                scale_unit = 1
+              }
+            }
+            vpn_gateway = {
+              enabled = false
+              config = {
+                bgp_settings       = []
+                routing_preference = ""
+                scale_unit         = 1
+              }
+            }
+            azure_firewall = {
+              enabled = false
+              config = {
+                enable_dns_proxy              = false
+                dns_servers                   = []
+                sku_tier                      = "Standard"
+                base_policy_id                = ""
+                private_ip_ranges             = []
+                threat_intelligence_mode      = ""
+                threat_intelligence_allowlist = []
+                availability_zones = {
+                  zone_1 = true
+                  zone_2 = true
+                  zone_3 = true
+                }
+              }
+            }
+            spoke_virtual_network_resource_ids = []
+            enable_virtual_hub_connections     = false
+          }
+        },
+      ]
       ddos_protection_plan = {
         enabled = false
         config = {
@@ -470,7 +665,7 @@ variable "custom_landing_zones" {
   default     = {}
 
   validation {
-    condition     = can([for k in keys(var.custom_landing_zones) : regex("^[a-z0-9-]{2,36}$", k)]) || length(keys(var.custom_landing_zones)) == 0
+    condition     = can([for k in keys(var.custom_landing_zones) : regex("^[a-zA-Z0-9-]{2,36}$", k)]) || length(keys(var.custom_landing_zones)) == 0
     error_message = "The custom_landing_zones keys must be between 2 to 36 characters long and can only contain lowercase letters, numbers and hyphens."
   }
 }
@@ -545,4 +740,16 @@ variable "custom_policy_roles" {
   type        = map(list(string))
   description = "If specified, the custom_policy_roles variable overrides which Role Definition ID(s) (value) to assign for Policy Assignments with a Managed Identity, if the assigned \"policyDefinitionId\" (key) is included in this variable."
   default     = {}
+}
+
+variable "disable_telemetry" {
+  type        = bool
+  description = "If set to true, will disable telemetry for the module. See https://aka.ms/alz-terraform-module-telemetry."
+  default     = false
+}
+
+variable "strict_subscription_association" {
+  type        = bool
+  description = "If set to true, subscriptions associated to management groups will be exclusively set by the module and any added by another process will be removed. If set to false, the module will will only enforce association of the specified subscriptions and those added to management groups by other processes will not be removed."
+  default     = true
 }

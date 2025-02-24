@@ -1,3 +1,4 @@
+<!-- markdownlint-disable first-line-h1 -->
 ## Overview
 
 As part of upgrade from release 0.1.2 to 0.2.0, the [Terraform Module for Cloud Adoption Framework Enterprise-scale][terraform-registry-caf-enterprise-scale] has updates to the included `Policy Definitions` and `Policy Set Definitions`.
@@ -22,7 +23,7 @@ The following changes have been made within the module which may cause issues wh
 
 - The `es_root` archetype definition has been updated to reflect the policy changes listed in the [resource changes](#resource-changes) section below.
 
-> NOTE: All references to resource names are **_Case Sensitive_**. Failure to use the correct case will result in an `Invalid index` error when running `terraform plan`, such as the following example:
+> **NOTE:** All references to resource names are **_Case Sensitive_**. Failure to use the correct case will result in an `Invalid index` error when running `terraform plan`, such as the following example:
 
 ```shell
 Error: Invalid index
@@ -72,7 +73,7 @@ This Policy Assignment now has the following additional parameters:
 
 > **IMPORTANT** If you are using custom archetype definitions, please ensure you update this to reflect the above changes.
 
-Take a look at the latest [User Guide](./User-Guide) documentation and our [Examples](./Examples) to understand the latest module configuration options, and review your implementation against the changes documented on this page.
+Take a look at the latest [User Guide](User-Guide) documentation and our [Examples](Examples) to understand the latest module configuration options, and review your implementation against the changes documented on this page.
 
 [//]: # "************************"
 [//]: # "INSERT LINK LABELS BELOW"

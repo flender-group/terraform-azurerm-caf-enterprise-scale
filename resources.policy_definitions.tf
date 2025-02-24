@@ -9,7 +9,6 @@ resource "azurerm_policy_definition" "enterprise_scale" {
 
   # Optional resource attributes
   description         = try(each.value.template.properties.description, "${each.value.template.name} Policy Definition at scope ${each.value.scope_id}")
-  # adding compatibility with azurerm provider v3.42.0. Was management_group_name before.
   management_group_id = try(each.value.scope_id, null)
   policy_rule         = try(length(each.value.template.properties.policyRule) > 0, false) ? jsonencode(each.value.template.properties.policyRule) : null
   metadata            = try(length(each.value.template.properties.metadata) > 0, false) ? jsonencode(each.value.template.properties.metadata) : null
