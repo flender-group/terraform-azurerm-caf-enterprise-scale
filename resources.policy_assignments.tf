@@ -16,6 +16,22 @@ resource "azurerm_management_group_policy_assignment" "enterprise_scale" {
   not_scopes   = try(each.value.template.properties.notScopes, local.empty_list)
   enforce      = each.value.enforcement_mode
 
+  # Dynamic configuration blocks for overrides
+  # More details can be found here: https://learn.microsoft.com/en-gb/azure/governance/policy/concepts/assignment-structure#overrides-preview
+  dynamic "overrides" {
+    for_each = try({ for i, override in each.value.template.properties.overrides : i => override }, local.empty_map)
+    content {
+      value = overrides.value.value
+      dynamic "selectors" {
+        for_each = try({ for i, selector in overrides.value.selectors : i => selector }, local.empty_map)
+        content {
+          in     = try(selectors.in, local.empty_list)
+          not_in = try(selectors.not_in, local.empty_list)
+        }
+      }
+    }
+  }
+
   # Dynamic configuration blocks
   # The identity block only supports a single value
   # for type = "SystemAssigned" so the following logic
@@ -32,6 +48,25 @@ resource "azurerm_management_group_policy_assignment" "enterprise_scale" {
     for_each = (try(each.value.template.identity.type, null) == "SystemAssigned" ? { "yes" = true } : {})
     content {
       type = "SystemAssigned"
+    }
+  }
+
+  # Optional Resource selectors block
+  # Only one of "in" or "not_in" should be used
+  # Each kind can be used only once
+
+  dynamic "resource_selectors" {
+    for_each = try({ for i, resourceSelector in each.value.template.properties.resourceSelectors : i => resourceSelector }, local.empty_map)
+    content {
+      name = resource_selectors.value.name
+      dynamic "selectors" {
+        for_each = try({ for i, selector in resource_selectors.value.selectors : i => selector }, local.empty_map)
+        content {
+          in     = try(selectors.value.in, local.empty_list)
+          kind   = selectors.value.kind
+          not_in = try(selectors.value.not_in, local.empty_list)
+        }
+      }
     }
   }
   dynamic "resource_selectors" {

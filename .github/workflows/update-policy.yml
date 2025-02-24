@@ -4,7 +4,7 @@ name: Update Library Templates
 # yamllint disable-line rule:truthy
 on:
   schedule:
-    - cron: '0 8 * * 1-5'
+    - cron: "0 8 * * 1-5"
   workflow_dispatch: {}
 
 env:
@@ -21,17 +21,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Local repository checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           path: ${{ github.repository }}
           fetch-depth: 0
 
       - name: Remote repository checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           repository: ${{ env.remote_repository }}
           path: ${{ env.remote_repository }}
           ref: main
+
+      - uses: tibdex/github-app-token@v1
+        id: generate-token
+        with:
+          app_id: ${{ secrets.APP_ID }}
+          private_key: ${{ secrets.APP_PRIVATE_KEY }}
 
       - name: Configure local git
         run: |
@@ -54,18 +60,30 @@ jobs:
           fi
         working-directory: ${{ github.repository }}
         env:
-          GITHUB_TOKEN: ${{ secrets.github_token }}
+          GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
 
       - name: Update library templates
         uses: azure/powershell@v1
         with:
           inlineScript: |
-            Write-Information "==> Running script..." -InformationAction Continue
-            ${{ github.repository }}/.github/scripts/Invoke-LibraryUpdate.ps1 `
+            Write-Information "==> Running policy definitions script..." -InformationAction Continue
+            ${{ github.repository }}/.github/scripts/Invoke-LibraryUpdatePolicyDefinitions.ps1 `
               -AlzToolsPath "${{ github.workspace }}/${{ env.remote_repository }}/src/Alz.Tools/" `
               -TargetPath "${{ github.workspace }}/${{ github.repository }}" `
               -SourcePath "${{ github.workspace }}/${{ env.remote_repository }}" `
               -Reset
+
+            Write-Information "==> Running policy assignments script..." -InformationAction Continue
+            ${{ github.repository }}/.github/scripts/Invoke-LibraryUpdatePolicyAssignments.ps1 `
+              -AlzToolsPath "${{ github.workspace }}/${{ env.remote_repository }}/src/Alz.Tools/" `
+              -TargetPath "${{ github.workspace }}/${{ github.repository }}" `
+              -SourcePath "${{ github.workspace }}/${{ env.remote_repository }}"
+
+            Write-Information "==> Running archetypes script..." -InformationAction Continue
+            ${{ github.repository }}/.github/scripts/Invoke-LibraryUpdatePolicyAssignmentArchetypes.ps1 `
+              -AlzToolsPath "${{ github.workspace }}/${{ env.remote_repository }}/src/Alz.Tools/" `
+              -TargetPath "${{ github.workspace }}/${{ github.repository }}" `
+              -SourcePath "${{ github.workspace }}/${{ env.remote_repository }}"
           azPSVersion: "latest"
 
       - name: Check for changes
@@ -107,4 +125,4 @@ jobs:
           fi
         working-directory: ${{ github.repository }}
         env:
-          GITHUB_TOKEN: ${{ secrets.github_token }}
+          GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}

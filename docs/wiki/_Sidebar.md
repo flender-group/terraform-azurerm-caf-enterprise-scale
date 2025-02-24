@@ -6,6 +6,7 @@
 - [Home][wiki_home]
 - [User guide][wiki_user_guide]
   - [Getting started][wiki_getting_started]
+  - [Module outputs][wiki_module_outputs]
   - [Module permissions][wiki_module_permissions]
   - [Module variables][wiki_module_variables]
   - [Module releases][wiki_module_releases]
@@ -33,11 +34,13 @@
   - [Level 300][wiki_examples_level_300]
     - [Deploy connectivity resources with custom settings (Hub and Spoke)][wiki_deploy_connectivity_resources_custom]
     - [Deploy connectivity resources with custom settings (Virtual WAN)][wiki_deploy_virtual_wan_resources_custom]
+    - [Deploy with Zero Trust network principles (Hub and Spoke)][wiki_deploy_ZT_network]
     - [Deploy identity resources with custom settings][wiki_deploy_identity_resources_custom]
     - [Deploy management resources with custom settings][wiki_deploy_management_resources_custom]
     - [Expand built-in archetype definitions][wiki_expand_built_in_archetype_definitions]
     - [Create custom policies, initiatives and assignments][wiki_create_custom_policies_policy_sets_and_assignments]
     - [Override module role assignments][wiki_override_module_role_assignments]
+    - [Control policy enforcement mode]([Examples]-Deploy-policies-without-enforcing-them)
   - [Level 400][wiki_examples_level_400]
     - [Deploy using module nesting][wiki_deploy_using_module_nesting]
     - [Deploy using multiple module declarations with orchestration][wiki_deploy_using_multiple_module_declarations_with_orchestration]
@@ -57,6 +60,7 @@
 [wiki_home]:                                                         Home "Wiki - Home"
 [wiki_user_guide]:                                                   User-Guide "Wiki - User guide"
 [wiki_getting_started]:                                              %5BUser-Guide%5D-Getting-Started "Wiki - Getting started"
+[wiki_module_outputs]:                                               %5BUser-Guide%5D-Module-Outputs "Wiki - Module outputs"
 [wiki_module_permissions]:                                           %5BUser-Guide%5D-Module-Permissions "Wiki - Module permissions"
 [wiki_module_variables]:                                             %5BUser-Guide%5D-Module-Variables "Wiki - Module variables"
 [wiki_module_releases]:                                              %5BUser-Guide%5D-Module-Releases "Wiki - Module releases"
@@ -100,3 +104,4 @@
 [wiki_create_custom_policies_policy_sets_and_assignments]:           %5BExamples%5D-Create-Custom-Policies-Policy-Sets-and-Assignments "Wiki - Create custom policies, initiatives and assignments"
 [wiki_assign_a_built_in_policy]:                                     %5BExamples%5D-Assign-a-Built-in-Policy "Wiki - Assign a built-in policy"
 [wiki_create_and_assign_custom_rbac_roles]:                          %5BExamples%5D-Create-and-Assign-Custom-RBAC-Roles "Wiki - Create and assign custom RBAC roles"
+[wiki_deploy_ZT_network]:                                                    %5BExamples%5D-Deploy-ZT-Network "Wiki - Deploy with Zero Trust network principles (Hub and Spoke)"

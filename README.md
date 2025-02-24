@@ -40,7 +40,7 @@ This allows customers to address concerns around managing large state files, or 
 
 ## Terraform versions
 
-This module has been tested using Terraform `1.3.1` and AzureRM Provider `3.19.0` as a baseline, and various versions to up the latest at time of release.
+This module has been tested using Terraform `1.3.1` and AzureRM Provider `3.54.0` as a baseline, and various versions to up the latest at time of release.
 In some cases, individual versions of the AzureRM provider may cause errors.
 If this happens, we advise upgrading to the latest version and checking our [troubleshooting](https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/Troubleshooting) guide before [raising an issue](https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/issues).
 
@@ -65,7 +65,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = ">= 3.19.0"
+      version = ">= 3.54.0"
     }
   }
 }
@@ -93,12 +93,18 @@ variable "root_name" {
   default = "Enterprise-Scale"
 }
 
+variable "default_location" {
+  type    = string
+}
+
 # Declare the Azure landing zones Terraform module
 # and provide a base configuration.
 
 module "enterprise_scale" {
   source  = "Azure/caf-enterprise-scale/azurerm"
   version = "<version>" # change this to your desired version, https://www.terraform.io/language/expressions/version-constraints
+
+  default_location = var.default_location
 
   providers = {
     azurerm              = azurerm
@@ -149,6 +155,7 @@ Please see the [releases](https://github.com/Azure/terraform-azurerm-caf-enterpr
 
 For upgrade guides from previous versions, please refer to the following links:
 
+- [Upgrade from v3.3.0 to v4.0.0](https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BUser-Guide%5D-Upgrade-from-v3.3.0-to-v4.0.0)
 - [Upgrade from v2.4.1 to v3.0.0](https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BUser-Guide%5D-Upgrade-from-v2.4.1-to-v3.0.0)
 - [Upgrade from v1.1.4 to v2.0.0](https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BUser-Guide%5D-Upgrade-from-v1.1.4-to-v2.0.0)
 - [Upgrade from v0.4.0 to v1.0.0](https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BUser-Guide%5D-Upgrade-from-v0.4.0-to-v1.0.0)
@@ -167,7 +174,7 @@ The following requirements are needed by this module:
 
 - <a name="requirement_azapi"></a> [azapi](#requirement\_azapi) (>= 1.3.0)
 
-- <a name="requirement_azurerm"></a> [azurerm](#requirement\_azurerm) (>= 3.19.0)
+- <a name="requirement_azurerm"></a> [azurerm](#requirement\_azurerm) (>= 3.54.0)
 
 - <a name="requirement_random"></a> [random](#requirement\_random) (>= 3.1.0)
 
@@ -213,6 +220,12 @@ Version:
 
 The following input variables are required:
 
+### <a name="input_default_location"></a> [default\_location](#input\_default\_location)
+
+Description: Must be specified, e.g `eastus`. Will set the Azure region in which region bound resources will be deployed. Please see: https://azure.microsoft.com/en-gb/global-infrastructure/geographies/
+
+Type: `string`
+
 ### <a name="input_root_parent_id"></a> [root\_parent\_id](#input\_root\_parent\_id)
 
 Description: The root\_parent\_id is used to specify where to set the root for all Landing Zone deployments. Usually the Tenant ID when deploying the core Enterprise-scale Landing Zones.
@@ -225,7 +238,68 @@ The following input variables are optional (have default values):
 
 ### <a name="input_archetype_config_overrides"></a> [archetype\_config\_overrides](#input\_archetype\_config\_overrides)
 
-Description: If specified, will set custom Archetype configurations for the core ALZ Management Groups. Does not work for management groups specified by the 'custom\_landing\_zones' input variable.
+Description: If specified, will set custom Archetype configurations for the core ALZ Management Groups.  
+Does not work for management groups specified by the 'custom\_landing\_zones' input variable.  
+To override the default configuration settings for any of the core Management Groups, add an entry to the archetype\_config\_overrides variable for each Management Group you want to customize.  
+To create a valid archetype\_config\_overrides entry, you must provide the required values in the archetype\_config\_overrides object for the Management Group you wish to re-configure.  
+To do this, simply create an entry similar to the root example below for one or more of the supported core Management Group IDs:
+
+- root
+- decommissioned
+- sandboxes
+- landing-zones
+- platform
+- connectivity
+- management
+- identity
+- corp
+- online
+- sap
+
+```terraform
+map(
+  object({
+    archetype_id     = string
+    enforcement_mode = map(bool)
+    parameters       = map(any)
+    access_control   = map(list(string))
+  })
+)
+```
+
+e.g.
+
+```terraform
+  archetype_config_overrides = {
+    root = {
+      archetype_id = "root"
+      enforcement_mode = {
+        "Example-Policy-Assignment" = true,
+      }
+      parameters = {
+        Example-Policy-Assignment = {
+          parameterStringExample = "value1",
+          parameterBoolExample   = true,
+          parameterNumberExample = 10,
+          parameterListExample = [
+            "listItem1",
+            "listItem2",
+          ]
+          parameterObjectExample = {
+            key1 = "value1",
+            key2 = "value2",
+          }
+        }
+      }
+      access_control = {
+        Example-Role-Definition = [
+          "00000000-0000-0000-0000-000000000000", # Object ID of user/group/spn/mi from Azure AD
+          "11111111-1111-1111-1111-111111111111", # Object ID of user/group/spn/mi from Azure AD
+        ]
+      }
+    }
+  }
+```
 
 Type: `any`
 
@@ -233,7 +307,20 @@ Default: `{}`
 
 ### <a name="input_configure_connectivity_resources"></a> [configure\_connectivity\_resources](#input\_configure\_connectivity\_resources)
 
-Description: If specified, will customize the "Connectivity" landing zone settings and resources.
+Description: If specified, will customize the \"Connectivity\" landing zone settings and resources.
+
+Notes for the `configure_connectivity_resources` variable:
+
+- `settings.hub_network_virtual_network_gateway.config.address_prefix`
+  - Only support adding a single address prefix for GatewaySubnet subnet
+- `settings.hub_network_virtual_network_gateway.config.gateway_sku_expressroute`
+  - If specified, will deploy the ExpressRoute gateway into the GatewaySubnet subnet
+- `settings.hub_network_virtual_network_gateway.config.gateway_sku_vpn`
+  - If specified, will deploy the VPN gateway into the GatewaySubnet subnet
+- `settings.hub_network_virtual_network_gateway.config.advanced_vpn_settings.private_ip_address_allocation`
+  - Valid options are `""`, `"Static"` or `"Dynamic"`. Will set `private_ip_address_enabled` and `private_ip_address_allocation` as needed.
+- `settings.azure_firewall.config.address_prefix`
+  - Only support adding a single address prefix for AzureFirewallManagementSubnet subnet
 
 Type:
 
@@ -316,6 +403,7 @@ object({
               enabled = optional(bool, false)
               config = optional(object({
                 address_prefix                = optional(string, "")
+                address_management_prefix     = optional(string, "")
                 enable_dns_proxy              = optional(bool, true)
                 dns_servers                   = optional(list(string), [])
                 sku_tier                      = optional(string, "Standard")
@@ -490,194 +578,7 @@ object({
   })
 ```
 
-Default:
-
-```json
-{
-  "settings": {
-    "ddos_protection_plan": {
-      "config": {
-        "location": ""
-      },
-      "enabled": false
-    },
-    "dns": {
-      "config": {
-        "enable_private_dns_zone_virtual_network_link_on_hubs": true,
-        "enable_private_dns_zone_virtual_network_link_on_spokes": true,
-        "enable_private_link_by_service": {
-          "azure_api_management": true,
-          "azure_app_configuration_stores": true,
-          "azure_arc": true,
-          "azure_automation_dscandhybridworker": true,
-          "azure_automation_webhook": true,
-          "azure_backup": true,
-          "azure_batch_account": true,
-          "azure_bot_service_bot": true,
-          "azure_bot_service_token": true,
-          "azure_cache_for_redis": true,
-          "azure_cache_for_redis_enterprise": true,
-          "azure_container_registry": true,
-          "azure_cosmos_db_cassandra": true,
-          "azure_cosmos_db_gremlin": true,
-          "azure_cosmos_db_mongodb": true,
-          "azure_cosmos_db_sql": true,
-          "azure_cosmos_db_table": true,
-          "azure_data_explorer": true,
-          "azure_data_factory": true,
-          "azure_data_factory_portal": true,
-          "azure_data_health_data_services": true,
-          "azure_data_lake_file_system_gen2": true,
-          "azure_database_for_mariadb_server": true,
-          "azure_database_for_mysql_server": true,
-          "azure_database_for_postgresql_server": true,
-          "azure_digital_twins": true,
-          "azure_event_grid_domain": true,
-          "azure_event_grid_topic": true,
-          "azure_event_hubs_namespace": true,
-          "azure_file_sync": true,
-          "azure_hdinsights": true,
-          "azure_iot_dps": true,
-          "azure_iot_hub": true,
-          "azure_key_vault": true,
-          "azure_key_vault_managed_hsm": true,
-          "azure_kubernetes_service_management": true,
-          "azure_machine_learning_workspace": true,
-          "azure_managed_disks": true,
-          "azure_media_services": true,
-          "azure_migrate": true,
-          "azure_monitor": true,
-          "azure_purview_account": true,
-          "azure_purview_studio": true,
-          "azure_relay_namespace": true,
-          "azure_search_service": true,
-          "azure_service_bus_namespace": true,
-          "azure_site_recovery": true,
-          "azure_sql_database_sqlserver": true,
-          "azure_synapse_analytics_dev": true,
-          "azure_synapse_analytics_sql": true,
-          "azure_synapse_studio": true,
-          "azure_web_apps_sites": true,
-          "azure_web_apps_static_sites": true,
-          "cognitive_services_account": true,
-          "microsoft_power_bi": true,
-          "signalr": true,
-          "signalr_webpubsub": true,
-          "storage_account_blob": true,
-          "storage_account_file": true,
-          "storage_account_queue": true,
-          "storage_account_table": true,
-          "storage_account_web": true
-        },
-        "location": "",
-        "private_dns_zones": [],
-        "private_link_locations": [],
-        "public_dns_zones": [],
-        "virtual_network_resource_ids_to_link": []
-      },
-      "enabled": true
-    },
-    "hub_networks": [
-      {
-        "config": {
-          "address_space": [
-            "10.100.0.0/16"
-          ],
-          "azure_firewall": {
-            "config": {
-              "address_prefix": "10.100.0.0/24",
-              "availability_zones": {
-                "zone_1": true,
-                "zone_2": true,
-                "zone_3": true
-              },
-              "base_policy_id": "",
-              "dns_servers": [],
-              "enable_dns_proxy": true,
-              "private_ip_ranges": [],
-              "sku_tier": "",
-              "threat_intelligence_allowlist": [],
-              "threat_intelligence_mode": ""
-            },
-            "enabled": false
-          },
-          "bgp_community": "",
-          "dns_servers": [],
-          "enable_hub_network_mesh_peering": false,
-          "enable_outbound_virtual_network_peering": false,
-          "link_to_ddos_protection_plan": false,
-          "location": "",
-          "spoke_virtual_network_resource_ids": [],
-          "subnets": [],
-          "virtual_network_gateway": {
-            "config": {
-              "address_prefix": "10.100.1.0/24",
-              "advanced_vpn_settings": {
-                "active_active": null,
-                "bgp_settings": [],
-                "custom_route": [],
-                "default_local_network_gateway_id": "",
-                "enable_bgp": null,
-                "private_ip_address_allocation": "",
-                "vpn_client_configuration": []
-              },
-              "gateway_sku_expressroute": "ErGw2AZ",
-              "gateway_sku_vpn": "VpnGw3"
-            },
-            "enabled": false
-          }
-        },
-        "enabled": true
-      }
-    ],
-    "vwan_hub_networks": [
-      {
-        "config": {
-          "address_prefix": "10.200.0.0/22",
-          "azure_firewall": {
-            "config": {
-              "availability_zones": {
-                "zone_1": true,
-                "zone_2": true,
-                "zone_3": true
-              },
-              "base_policy_id": "",
-              "dns_servers": [],
-              "enable_dns_proxy": false,
-              "private_ip_ranges": [],
-              "sku_tier": "Standard",
-              "threat_intelligence_allowlist": [],
-              "threat_intelligence_mode": ""
-            },
-            "enabled": false
-          },
-          "enable_virtual_hub_connections": false,
-          "expressroute_gateway": {
-            "config": {
-              "scale_unit": 1
-            },
-            "enabled": false
-          },
-          "location": "",
-          "routes": [],
-          "secure_spoke_virtual_network_resource_ids": [],
-          "sku": "",
-          "spoke_virtual_network_resource_ids": [],
-          "vpn_gateway": {
-            "config": {
-              "bgp_settings": [],
-              "routing_preference": "",
-              "scale_unit": 1
-            },
-            "enabled": false
-          }
-        },
-        "enabled": false
-      }
-    ]
-  }
-}
-```
+Default: `{}`
 
 ### <a name="input_configure_identity_resources"></a> [configure\_identity\_resources](#input\_configure\_identity\_resources)
 
@@ -701,23 +602,7 @@ object({
   })
 ```
 
-Default:
-
-```json
-{
-  "settings": {
-    "identity": {
-      "config": {
-        "enable_deny_public_ip": true,
-        "enable_deny_rdp_from_internet": true,
-        "enable_deny_subnet_without_nsg": true,
-        "enable_deploy_azure_backup_on_vms": true
-      },
-      "enabled": true
-    }
-  }
-}
-```
+Default: `{}`
 
 ### <a name="input_configure_management_resources"></a> [configure\_management\_resources](#input\_configure\_management\_resources)
 
@@ -737,29 +622,34 @@ object({
           enable_solution_for_agent_health_assessment       = optional(bool, true)
           enable_solution_for_anti_malware                  = optional(bool, true)
           enable_solution_for_change_tracking               = optional(bool, true)
-          enable_solution_for_service_map                   = optional(bool, true)
+          enable_solution_for_service_map                   = optional(bool, false)
           enable_solution_for_sql_assessment                = optional(bool, true)
           enable_solution_for_sql_vulnerability_assessment  = optional(bool, true)
           enable_solution_for_sql_advanced_threat_detection = optional(bool, true)
           enable_solution_for_updates                       = optional(bool, true)
           enable_solution_for_vm_insights                   = optional(bool, true)
+          enable_solution_for_container_insights            = optional(bool, true)
           enable_sentinel                                   = optional(bool, true)
         }), {})
       }), {})
       security_center = optional(object({
         enabled = optional(bool, true)
         config = optional(object({
-          email_security_contact             = optional(string, "security_contact@replace_me")
-          enable_defender_for_app_services   = optional(bool, true)
-          enable_defender_for_arm            = optional(bool, true)
-          enable_defender_for_containers     = optional(bool, true)
-          enable_defender_for_dns            = optional(bool, true)
-          enable_defender_for_key_vault      = optional(bool, true)
-          enable_defender_for_oss_databases  = optional(bool, true)
-          enable_defender_for_servers        = optional(bool, true)
-          enable_defender_for_sql_servers    = optional(bool, true)
-          enable_defender_for_sql_server_vms = optional(bool, true)
-          enable_defender_for_storage        = optional(bool, true)
+          email_security_contact                                = optional(string, "security_contact@replace_me")
+          enable_defender_for_apis                              = optional(bool, true)
+          enable_defender_for_app_services                      = optional(bool, true)
+          enable_defender_for_arm                               = optional(bool, true)
+          enable_defender_for_containers                        = optional(bool, true)
+          enable_defender_for_cosmosdbs                         = optional(bool, true)
+          enable_defender_for_cspm                              = optional(bool, true)
+          enable_defender_for_dns                               = optional(bool, true)
+          enable_defender_for_key_vault                         = optional(bool, true)
+          enable_defender_for_oss_databases                     = optional(bool, true)
+          enable_defender_for_servers                           = optional(bool, true)
+          enable_defender_for_servers_vulnerability_assessments = optional(bool, true)
+          enable_defender_for_sql_servers                       = optional(bool, true)
+          enable_defender_for_sql_server_vms                    = optional(bool, true)
+          enable_defender_for_storage                           = optional(bool, true)
         }), {})
       }), {})
     }), {})
@@ -769,48 +659,7 @@ object({
   })
 ```
 
-Default:
-
-```json
-{
-  "settings": {
-    "log_analytics": {
-      "config": {
-        "enable_monitoring_for_vm": true,
-        "enable_monitoring_for_vmss": true,
-        "enable_sentinel": true,
-        "enable_solution_for_agent_health_assessment": true,
-        "enable_solution_for_anti_malware": true,
-        "enable_solution_for_change_tracking": true,
-        "enable_solution_for_service_map": true,
-        "enable_solution_for_sql_advanced_threat_detection": true,
-        "enable_solution_for_sql_assessment": true,
-        "enable_solution_for_sql_vulnerability_assessment": true,
-        "enable_solution_for_updates": true,
-        "enable_solution_for_vm_insights": true,
-        "retention_in_days": 30
-      },
-      "enabled": true
-    },
-    "security_center": {
-      "config": {
-        "email_security_contact": "security_contact@replace_me",
-        "enable_defender_for_app_services": true,
-        "enable_defender_for_arm": true,
-        "enable_defender_for_containers": true,
-        "enable_defender_for_dns": true,
-        "enable_defender_for_key_vault": true,
-        "enable_defender_for_oss_databases": true,
-        "enable_defender_for_servers": true,
-        "enable_defender_for_sql_server_vms": true,
-        "enable_defender_for_sql_servers": true,
-        "enable_defender_for_storage": true
-      },
-      "enabled": true
-    }
-  }
-}
-```
+Default: `{}`
 
 ### <a name="input_create_duration_delay"></a> [create\_duration\_delay](#input\_create\_duration\_delay)
 
@@ -829,22 +678,65 @@ object({
   })
 ```
 
-Default:
-
-```json
-{
-  "azurerm_management_group": "30s",
-  "azurerm_policy_assignment": "30s",
-  "azurerm_policy_definition": "30s",
-  "azurerm_policy_set_definition": "30s",
-  "azurerm_role_assignment": "0s",
-  "azurerm_role_definition": "60s"
-}
-```
+Default: `{}`
 
 ### <a name="input_custom_landing_zones"></a> [custom\_landing\_zones](#input\_custom\_landing\_zones)
 
-Description: If specified, will deploy additional Management Groups alongside Enterprise-scale core Management Groups.
+Description: If specified, will deploy additional Management Groups alongside Enterprise-scale core Management Groups.  
+Although the object type for this input variable is set to `any`, the expected object is based on the following structure:
+
+```terraform
+variable "custom_landing_zones" {
+  type = map(
+    object({
+      display_name               = string
+      parent_management_group_id = string
+      subscription_ids           = list(string)
+      archetype_config = object({
+        archetype_id   = string
+        parameters     = map(any)
+        access_control = map(list(string))
+      })
+    })
+  )
+```
+
+The decision not to hard code the structure in the input variable `type` is by design, as it allows Terraform to handle the input as a dynamic object type.  
+This was necessary to allow the `parameters` value to be correctly interpreted.  
+Without this, Terraform would throw an error if each parameter value wasn't a consistent type, as it would incorrectly identify the input as a `tuple` which must contain consistent type structure across all entries.
+
+> Note the id of the custom landing zone will be appended to `var.root_id`. The maximum length of the resulting name must be less than 90 characters.
+
+The `custom_landing_zones` object is used to deploy additional Management Groups within the core Management Group hierarchy.  
+The main object parameters are `display_name`, `parent_management_group_id`, `subscription_ids`and `archetype_config`.
+
+- `display_name` is the name assigned to the Management Group.
+
+- `parent_management_group_id` is the name of the parent Management Group and must be a valid Management Group ID.
+
+- `subscription_ids` is an object containing a list of Subscription IDs to assign to the current Management Group.
+
+- `archetype_config` is used to configure the configuration applied to each Management Group. This object must contain valid entries for the `archetype_id` `parameters`, and `access_control` attributes.
+
+The following example shows how you would add a simple Management Group under the `myorg-landing-zones` Management Group, where `root_id = "myorg"` and using the default\_empty archetype definition.
+
+```terraform
+  custom_landing_zones = {
+    myorg-customer-corp = {
+      display_name               = "MyOrg Customer Corp"
+      parent_management_group_id = "myorg-landing-zones"
+      subscription_ids           = [
+        "00000000-0000-0000-0000-000000000000",
+        "11111111-1111-1111-1111-111111111111",
+      ]
+      archetype_config = {
+        archetype_id   = "default_empty"
+        parameters     = {}
+        access_control = {}
+      }
+    }
+  }
+```
 
 Type: `any`
 
@@ -857,14 +749,6 @@ Description: If specified, the custom\_policy\_roles variable overrides which Ro
 Type: `map(list(string))`
 
 Default: `{}`
-
-### <a name="input_default_location"></a> [default\_location](#input\_default\_location)
-
-Description: If specified, will set the Azure region in which region bound resources will be deployed. Please see: https://azure.microsoft.com/en-gb/global-infrastructure/geographies/
-
-Type: `string`
-
-Default: `"eastus"`
 
 ### <a name="input_default_tags"></a> [default\_tags](#input\_default\_tags)
 
@@ -963,18 +847,7 @@ object({
   })
 ```
 
-Default:
-
-```json
-{
-  "azurerm_management_group": "0s",
-  "azurerm_policy_assignment": "0s",
-  "azurerm_policy_definition": "0s",
-  "azurerm_policy_set_definition": "0s",
-  "azurerm_role_assignment": "0s",
-  "azurerm_role_definition": "0s"
-}
-```
+Default: `{}`
 
 ### <a name="input_disable_base_module_tags"></a> [disable\_base\_module\_tags](#input\_disable\_base\_module\_tags)
 
@@ -1063,6 +936,48 @@ Default:
   "/providers/Microsoft.Authorization/policyDefinitions/95edb821-ddaf-4404-9732-666045e056b4"
 ]
 ```
+
+### <a name="input_resource_custom_timeouts"></a> [resource\_custom\_timeouts](#input\_resource\_custom\_timeouts)
+
+Description: Optional - Used to tune terraform deploy when faced with errors caused by API limits.
+
+For each supported resource type, there is a child object that specifies the create, update, and delete timeouts.  
+Each of these arguments takes a string representation of a duration, such as "60m" for 60 minutes, "10s" for ten seconds, or "2h" for two hours.  
+If a timeout is not specified, the default value for the resource will be used.
+
+e.g.
+
+```hcl
+resource_custom_timeouts = {
+  azurerm_private_dns_zone = {
+    create = "1h"
+    update = "1h30m"
+    delete = "30m"
+    read   = "30s"
+  }
+}
+```
+
+Type:
+
+```hcl
+object({
+    azurerm_private_dns_zone = optional(object({
+      create = optional(string, null)
+      update = optional(string, null)
+      read   = optional(string, null)
+      delete = optional(string, null)
+    }), {})
+    azurerm_private_dns_zone_virtual_network_link = optional(object({
+      create = optional(string, null)
+      update = optional(string, null)
+      read   = optional(string, null)
+      delete = optional(string, null)
+    }), {})
+  })
+```
+
+Default: `{}`
 
 ### <a name="input_root_id"></a> [root\_id](#input\_root\_id)
 
@@ -1315,7 +1230,7 @@ Microsoft collects this information to provide the best experiences with their p
 The telemetry is collected through customer usage attribution.
 The data is collected and governed by [Microsoft's privacy policies](https://www.microsoft.com/trustcenter).
 
-If you don't wish to send usage data to Microsoft, details on how to turn it off can be found [here](https://github.com/Azure/terraform-azurerm-caf-enterprise-scale/wiki/%5BVariables%5D-disable_telemetry).
+If you don't wish to send usage data to Microsoft, details on how to turn it off can be found [here](https://github.com/Azure/terraform-azurerm-caf-enterprise-scale#input_disable_telemetry).
 
 ## License
 

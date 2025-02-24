@@ -78,7 +78,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = ">= 3.19.0"
+      version = ">= 3.54.0"
     }
   }
 }
@@ -109,7 +109,6 @@ module "enterprise_scale" {
   root_id        = "myorg"
   root_name      = "My Organization"
   library_path   = "${path.root}/lib"
-
 }
 
 ```

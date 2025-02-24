@@ -14,8 +14,8 @@ variable "root_id" {
   description = "Specifies the ID of the Enterprise-scale root Management Group, used as a prefix for resources created by this module."
 
   validation {
-    condition     = can(regex("^[a-zA-Z0-9-]{2,10}$", var.root_id))
-    error_message = "Value must be between 2 to 10 characters long, consisting of alphanumeric characters and hyphens."
+    condition     = can(regex("[a-zA-Z0-9-_\\(\\)\\.]", var.root_id))
+    error_message = "Value must consist of alphanumeric characters and hyphens."
   }
 }
 
@@ -58,23 +58,28 @@ variable "settings" {
         enable_solution_for_sql_advanced_threat_detection = optional(bool, true)
         enable_solution_for_updates                       = optional(bool, true)
         enable_solution_for_vm_insights                   = optional(bool, true)
+        enable_solution_for_container_insights            = optional(bool, true)
         enable_sentinel                                   = optional(bool, true)
       }), {})
     }), {})
     security_center = optional(object({
       enabled = optional(bool, true)
       config = optional(object({
-        email_security_contact             = optional(string, "security_contact@replace_me")
-        enable_defender_for_app_services   = optional(bool, true)
-        enable_defender_for_arm            = optional(bool, true)
-        enable_defender_for_containers     = optional(bool, true)
-        enable_defender_for_dns            = optional(bool, true)
-        enable_defender_for_key_vault      = optional(bool, true)
-        enable_defender_for_oss_databases  = optional(bool, true)
-        enable_defender_for_servers        = optional(bool, true)
-        enable_defender_for_sql_servers    = optional(bool, true)
-        enable_defender_for_sql_server_vms = optional(bool, true)
-        enable_defender_for_storage        = optional(bool, true)
+        email_security_contact                                = optional(string, "security_contact@replace_me")
+        enable_defender_for_apis                              = optional(bool, true)
+        enable_defender_for_app_services                      = optional(bool, true)
+        enable_defender_for_arm                               = optional(bool, true)
+        enable_defender_for_containers                        = optional(bool, true)
+        enable_defender_for_cosmosdbs                         = optional(bool, true)
+        enable_defender_for_cspm                              = optional(bool, true)
+        enable_defender_for_dns                               = optional(bool, true)
+        enable_defender_for_key_vault                         = optional(bool, true)
+        enable_defender_for_oss_databases                     = optional(bool, true)
+        enable_defender_for_servers                           = optional(bool, true)
+        enable_defender_for_servers_vulnerability_assessments = optional(bool, true)
+        enable_defender_for_sql_servers                       = optional(bool, true)
+        enable_defender_for_sql_server_vms                    = optional(bool, true)
+        enable_defender_for_storage                           = optional(bool, true)
       }), {})
     }), {})
   })

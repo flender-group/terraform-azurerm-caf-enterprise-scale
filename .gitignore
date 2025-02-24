@@ -44,10 +44,12 @@ tests/modules/test_local
 # Ignore macOS .DS_Store files which are generated automatically by Finder.
 .DS_Store
 
-# Ignore Visual Studio Code config
-**/.vscode/*
+# Ignore Visual Studio Code settings config
+**/.vscode/settings.json
 
 # Ignore Super-Linter log
 **/super-linter.report
 **/super-linter.report/*
 **/super-linter.log
+.vscode/launch.json
+.github/scripts/Template.Parser.Cli.exe
