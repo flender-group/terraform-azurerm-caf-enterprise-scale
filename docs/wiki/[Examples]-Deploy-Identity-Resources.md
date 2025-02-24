@@ -19,7 +19,7 @@ The module updates the `parameters` and `enforcement_mode` for a number of Polic
 - Enforce NSG on Subnets;
 - Enable Azure Backup for VMs;
 
-> IMPORTANT: Ensure the module version is set to the latest, and don't forget to run `terraform init` if upgrading to a later version of the module.
+> **IMPORTANT:** Ensure the module version is set to the latest, and don't forget to run `terraform init` if upgrading to a later version of the module.
 
 ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/Azure/terraform-azurerm-caf-enterprise-scale?style=flat&logo=github)
 
@@ -27,7 +27,7 @@ The module updates the `parameters` and `enforcement_mode` for a number of Polic
 
 To create the Identity resources, `deploy_identity_resources` must be set to `true`, and the `subscription_id_identity` is also required.
 
-> TIP: The exact number of resources created depends on the module configuration, but you can expect upwards of 180 resources to be created by the module for this example.
+> **TIP:** The exact number of resources created depends on the module configuration, but you can expect upwards of 180 resources to be created by the module for this example.
 
 To keep this example simple, the root module for this example is based on a single file:
 
@@ -41,7 +41,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = ">= 3.0.2"
+      version = ">= 3.19.0"
     }
   }
 }
@@ -60,7 +60,7 @@ data "azurerm_client_config" "core" {}
 
 module "enterprise_scale" {
   source  = "Azure/caf-enterprise-scale/azurerm"
-  version = "2.4.1"
+  version = "<version>" # change this to your desired version, https://www.terraform.io/language/expressions/version-constraints
 
   providers = {
     azurerm              = azurerm

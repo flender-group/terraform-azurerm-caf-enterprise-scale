@@ -51,7 +51,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = ">= 3.0.2"
+      version = ">= 3.19.0"
     }
   }
 }
@@ -70,7 +70,7 @@ data "azurerm_client_config" "core" {}
 
 module "enterprise_scale" {
   source  = "Azure/caf-enterprise-scale/azurerm"
-  version = "2.4.1"
+  version = "<version>" # change this to your desired version, https://www.terraform.io/language/expressions/version-constraints
 
   providers = {
     azurerm              = azurerm
@@ -125,7 +125,7 @@ The Resource Group `myorg-connectivity-eastus` should be created, and will initi
 ![Deployed Resources](media/examples-deploy-connectivity-rsg.png)
 
 When you explore the configuration, note that `myorg-hub-eastus` is pre-configured with subnets for `GatewaySubnet` and `AzureFirewallSubnet`.
-DDoS Protection Standard should also be disabled to reduce costs, although we recommend you **enable this for production environments**.
+DDoS Network Protection should also be disabled to reduce costs, although we recommend you **enable this for production environments**.
 The location of both the resource group and virtual network is created in the region specified via the `default_location` input variable, which uses the default value of `eastus` in this example.
 These settings can all be changed if needed!
 
@@ -159,9 +159,9 @@ Looking for further inspiration? Why not try some of our other [examples][wiki_e
 [//]: # "INSERT LINK LABELS BELOW"
 [//]: # "************************"
 
-[alz_connectivity]: https://docs.microsoft.com/azure/cloud-adoption-framework/ready/landing-zone/design-area/network-topology-and-connectivity "Network topology and connectivity for Azure landing zones on the Cloud Adoption Framework."
+[alz_connectivity]: https://learn.microsoft.com/azure/cloud-adoption-framework/ready/landing-zone/design-area/network-topology-and-connectivity "Network topology and connectivity for Azure landing zones on the Cloud Adoption Framework."
 
-[azure_private_endpoint_support]: https://docs.microsoft.com/azure/private-link/private-endpoint-dns#azure-services-dns-zone-configuration "Azure services DNS zone configuration"
+[azure_private_endpoint_support]: https://learn.microsoft.com/azure/private-link/private-endpoint-dns#azure-services-dns-zone-configuration "Azure services DNS zone configuration"
 
 [wiki_module_variables]:                     %5BUser-Guide%5D-Module-Variables "Wiki - Module Variables"
 [wiki_provider_configuration]:               %5BUser-Guide%5D-Provider-Configuration "Wiki - Provider Configuration"

@@ -3,9 +3,9 @@
 
 Before getting started with this module, please take note of the following considerations:
 
-1. This module requires a minimum `azurerm` provider version of `3.0.2`.
+1. This module requires a minimum `azurerm` provider version of `3.19.0`.
 
-1. This module requires a minimum Terraform version `0.15.1`.
+1. This module requires a minimum Terraform version `1.3.1`.
 
     > **NOTE:** New releases of the module may contain features which require the minimum supported versions to be increased, but changes will be clearly documented in the release notes, user guide, and readme.
 
@@ -53,18 +53,38 @@ However, when application teams choose to deploy resources with Terraform, the f
 
     > One remediation is to override the policy assignment and change the policy effect from `deny` to `audit`.
 
-1. Use of `DeployIfNotExists` and `Modify` Policy Effects
+1. Policy Effects
 
-    Terraform expects to be authoritative over the resources that it manages.
-    Any changes to the managed properties of Terraform managed resources in Azure will be rectified by Terraform during the next plan/apply cycle.
+    Terraform expects to be authoritative over the resources that it manages. Any changes to the managed properties of Terraform managed resources in Azure will be rectified by Terraform during the next plan/apply cycle.
 
-    The reference architecture uses Azure policy with `DeployIfNotExists` and `modify` effects that can modify properties of the Terraform managed resources.
+    | Policy Effect | Terraform Compatible |
+    | -------- | ------- |
+    | [Append](https://learn.microsoft.com/en-us/azure/governance/policy/concepts/effects#append) | No (with some exceptions) |
+    | [Audit](https://learn.microsoft.com/en-us/azure/governance/policy/concepts/effects#audit) | Yes |
+    | [AuditIfNotExists](https://learn.microsoft.com/en-us/azure/governance/policy/concepts/effects#auditifnotexists) | Yes |
+    | [Deny](https://learn.microsoft.com/en-us/azure/governance/policy/concepts/effects#deny) | Yes |
+    | [DeployIfNotExists](https://learn.microsoft.com/en-us/azure/governance/policy/concepts/effects#deployifnotexists) | Yes (with some exceptions) |
+    | [Modify](https://learn.microsoft.com/en-us/azure/governance/policy/concepts/effects#modify) | No (with some exceptions) |
 
-    The combination of `DeployIfNotExists`/`modify` policy and Terraform can result in a loop, with resources being continuously remediated by Azure Policy, then reverted by Terraform, then again remediated by Policy.
+    The reference architecture uses Azure policy with `DeployIfNotExists` and `Modify` effects that can modify properties of the Terraform managed resources.
+
+    The use of either `Append`/`DeployIfNotExists`/`Modify` policy effects and Terraform could result in a loop:
+    - A resource is deployed by the application team using Terraform.
+    - Azure Policy performs an action (`Append`/`DeployIfNotExists`/`Modify`) to the resource to ensure the resource is compliant with the guardrails of the platform.
+    - The application team performs an additional Terraform run where Terraform discovers that the resource has drifted away from the Terraform code and state. Terraform will try to correct the resource by either changing the property back or re-creating it.
+    - Azure Policy will remediate the resource so that it is compliant with the guardrails of the platform.
+
+    An example of this can be enforcing soft-delete on Key Vaults or enforcing Transport Data Encryption (TDE) through `Append`/`Modify` policies; the properties will not be defined in Terraform but will be remediated via Azure Policy resulting in the above loop.
+    This is almost always problematic when managing the resource with Terraform, however there is a rare case where the modified property of the resource is not tracked in Terraform state, then there will be no issue.
+
+    An exception to the above is when the use of `DeployIfNotExists` does not modify the in-scope resource of the Terraform deployment but instead deploys a child or extension resource to the non-compliant resource:
+    - A resource is deployed by the application team using Terraform.
+    - Azure Policy deploys a child or extension resource to the resource to ensure the resource is compliant.
+    - An additional Terraform run is performed, and there is no state-drift as Terraform does not need to modify or alter the child resource.
+
+    An example of this is deploying Diganostic Settings to a resource or a Private DNS Zone Group to a Private Endpoint.
 
     Create guidance for landing zone owners so that they understand the effects of these policies and can deploy resources in a compliant manner.
-
-    > Notable exceptions to this are `DeployIfNotExists` policies that do not modify the in-scope resource. For example: Policies that deploy diagnostic settings.
 
 ## Provisioning instructions
 
@@ -73,7 +93,7 @@ Copy and paste the following 'module' block into your Terraform configuration, i
 ```hcl
 module "caf-enterprise-scale" {
   source  = "Azure/caf-enterprise-scale/azurerm"
-  version = "2.4.1"
+  version = "<version>" # change this to your desired version, https://www.terraform.io/language/expressions/version-constraints
 
   providers = {
     azurerm              = azurerm
@@ -95,7 +115,7 @@ Learn how to use the [Module Variables](%5BUser-Guide%5D-Module-Variables) to cu
 [//]: # "INSERT LINK LABELS BELOW"
 [//]: # "************************"
 
-[ESLZ-Management]: https://docs.microsoft.com/azure/cloud-adoption-framework/ready/enterprise-scale/management-and-monitoring
+[ESLZ-Management]: https://learn.microsoft.com/azure/cloud-adoption-framework/ready/enterprise-scale/management-and-monitoring
 
 [wiki_management_resources]:                  %5BUser-Guide%5D-Management-Resources "Wiki - Management Resources"
 [wiki_connectivity_resources]:                %5BUser-Guide%5D-Connectivity-Resources "Wiki - Connectivity Resources"

@@ -5,7 +5,7 @@ The [Azure landing zones Terraform module][terraform-registry-caf-enterprise-sca
 
 This change is intended to simplify deployments using a single pipeline to create all resources, as it is no longer necessary to share the configuration inputs across multiple instances of the module to achieve consistency between the resources created, and associated policies.
 
-The module utilises 3 providers in total:
+The module utilizes 3 providers in total:
 
 | Resource category | Provider |
 | ----------------- | -------- |
@@ -54,7 +54,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = ">= 3.0.2"
+      version = ">= 3.19.0"
     }
   }
 }
@@ -70,7 +70,7 @@ provider "azurerm" {
 
 module "caf-enterprise-scale" {
   source  = "Azure/caf-enterprise-scale/azurerm"
-  version = "2.4.1"
+  version = "<version>" # change this to your desired version, https://www.terraform.io/language/expressions/version-constraints
 
   providers = {
     azurerm              = azurerm
@@ -111,8 +111,8 @@ The following example shows how you might configure multiple `provider` blocks a
 terraform {
   required_providers {
     azurerm = {
-      source                = "hashicorp/azurerm"
-      version               = ">= 3.0.2"
+      source  = "hashicorp/azurerm"
+      version = ">= 3.19.0"
       configuration_aliases = [
         azurerm.connectivity,
         azurerm.management,
@@ -150,7 +150,7 @@ provider "azurerm" {
 
 module "caf-enterprise-scale" {
   source  = "Azure/caf-enterprise-scale/azurerm"
-  version = "2.4.1"
+  version = "<version>" # change this to your desired version, https://www.terraform.io/language/expressions/version-constraints
 
   providers = {
     azurerm              = azurerm
@@ -208,7 +208,7 @@ data "azurerm_client_config" "connectivity" {
 # Map each module provider to their corresponding `azurerm` provider using the providers input object
 module "enterprise_scale" {
   source  = "Azure/caf-enterprise-scale/azurerm"
-  version = "2.4.1"
+  version = "<version>" # change this to your desired version, https://www.terraform.io/language/expressions/version-constraints
 
   providers = {
     azurerm              = azurerm
@@ -217,17 +217,17 @@ module "enterprise_scale" {
   }
 
   # Set the required input variable `root_parent_id` using the Tenant ID from the un-aliased provider
-  root_parent_id           = data.azurerm_client_config.core.tenant_id
+  root_parent_id = data.azurerm_client_config.core.tenant_id
 
   # Enable deployment of the management resources, using the management
   # aliased provider to populate the correct Subscription ID
-  deploy_management_resources    = true
-  subscription_id_management     = data.azurerm_client_config.management.subscription_id
+  deploy_management_resources = true
+  subscription_id_management  = data.azurerm_client_config.management.subscription_id
 
   # Enable deployment of the connectivity resources, using the connectivity
   # aliased provider to populate the correct Subscription ID
-  deploy_connectivity_resources    = true
-  subscription_id_connectivity     = data.azurerm_client_config.connectivity.subscription_id
+  deploy_connectivity_resources = true
+  subscription_id_connectivity  = data.azurerm_client_config.connectivity.subscription_id
 
   # insert additional optional input variables here
 
@@ -244,7 +244,7 @@ Learn how to use the [Module Variables](%5BUser-Guide%5D-Module-Variables) to cu
 [//]: # "INSERT LINK LABELS BELOW"
 [//]: # "************************"
 
-[ESLZ-Architecture]: https://docs.microsoft.com/azure/cloud-adoption-framework/ready/enterprise-scale/architecture "Azure landing zones architecture"
+[ESLZ-Architecture]: https://learn.microsoft.com/azure/cloud-adoption-framework/ready/enterprise-scale/architecture "Azure landing zones architecture"
 
 [terraform-registry-caf-enterprise-scale]: https://registry.terraform.io/modules/Azure/caf-enterprise-scale/azurerm/latest "Terraform Registry: Azure landing zones Terraform module"
 [authenticating_to_azure]:                 https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs#authenticating-to-azure "Terraform Registry: Azure Provider (Authenticating to Azure)"

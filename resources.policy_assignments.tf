@@ -54,7 +54,6 @@ resource "azurerm_management_group_policy_assignment" "enterprise_scale" {
     time_sleep.after_azurerm_policy_definition,
     time_sleep.after_azurerm_policy_set_definition,
   ]
-
 }
 
 resource "time_sleep" "after_azurerm_policy_assignment" {

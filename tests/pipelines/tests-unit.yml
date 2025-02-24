@@ -33,18 +33,14 @@ jobs:
       STORAGE_CONTAINER_NAME: $[ dependencies.backend_generator.outputs['prepare_backend.STORAGE_CONTAINER_NAME'] ]
     steps:
       - template: templates/tests-common.yml
+        parameters:
+          run_type: unit
 
       - task: Bash@3
         displayName: "[terraform fmt]"
         inputs:
           targetType: "inline"
           script: "make tf-fmt"
-
-      - task: Bash@3
-        displayName: "[conftest install]"
-        inputs:
-          targetType: "inline"
-          script: "make opa-install"
 
       - template: templates/tests-loop.yml
         parameters:

@@ -17,7 +17,7 @@ In this example, we take the [default configuration][wiki_deploy_default_configu
   - Parent Management Group ID: `myorg-landing-zones`
   - Allowed location list: `["eastus"]`
 
-> IMPORTANT: Ensure the module version is set to the latest, and don't forget to run `terraform init` if upgrading to a later version of the module.
+> **IMPORTANT:** Ensure the module version is set to the latest, and don't forget to run `terraform init` if upgrading to a later version of the module.
 
 ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/Azure/terraform-azurerm-caf-enterprise-scale?style=flat&logo=github)
 
@@ -44,7 +44,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = ">= 3.0.2"
+      version = ">= 3.19.0"
     }
   }
 }
@@ -95,7 +95,7 @@ data "azurerm_client_config" "core" {}
 
 module "enterprise_scale" {
   source  = "Azure/caf-enterprise-scale/azurerm"
-  version = "2.4.1"
+  version = "<version>" # change this to your desired version, https://www.terraform.io/language/expressions/version-constraints
 
   providers = {
     azurerm              = azurerm
@@ -124,13 +124,13 @@ module "enterprise_scale" {
       parent_management_group_id = "${var.root_id}-landing-zones"
       subscription_ids           = []
       archetype_config = {
-        archetype_id   = "customer_online"
-        parameters     = {
+        archetype_id = "customer_online"
+        parameters = {
           Deny-Resource-Locations = {
-            listOfAllowedLocations = ["eastus",]
+            listOfAllowedLocations = ["eastus", ]
           }
           Deny-RSG-Locations = {
-            listOfAllowedLocations = ["eastus",]
+            listOfAllowedLocations = ["eastus", ]
           }
         }
         access_control = {}
@@ -143,7 +143,7 @@ module "enterprise_scale" {
 
 ### `lib/archetype_definition_customer_online.json`
 
-> IMPORTANT: Please ensure you create this file in the `/lib` directory within your root module.
+> **IMPORTANT:** Please ensure you create this file in the `/lib` directory within your root module.
 
 The `lib/archetype_definition_customer_online.json` file contains a custom "archetype definition". This is a custom JSON format used specifically by the Azure landing zones Terraform module.
 
@@ -191,7 +191,7 @@ For more details about working with archetype definitions, please refer to the [
 
 You have successfully created the default Management Group resource hierarchy including additional Management Groups for demonstrating custom Landing Zone archetypes, along with the recommended Azure Policy and Access control (IAM) settings for your Azure landing zone.
 
-> TIP: The exact number of resources created depends on the module configuration, but you can expect upwards of 200 resources to be created by this module for a default installation.
+> **TIP:** The exact number of resources created depends on the module configuration, but you can expect upwards of 200 resources to be created by this module for a default installation.
 
 ## Next steps
 

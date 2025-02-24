@@ -42,7 +42,6 @@ locals {
 # should be created by this module
 locals {
   deploy_monitoring_settings          = local.settings.log_analytics.enabled
-  deploy_monitoring_for_arc           = local.deploy_monitoring_settings && local.settings.log_analytics.config.enable_monitoring_for_arc
   deploy_monitoring_for_vm            = local.deploy_monitoring_settings && local.settings.log_analytics.config.enable_monitoring_for_vm
   deploy_monitoring_for_vmss          = local.deploy_monitoring_settings && local.settings.log_analytics.config.enable_monitoring_for_vmss
   deploy_monitoring_resources         = local.enabled && local.deploy_monitoring_settings
@@ -53,7 +52,6 @@ locals {
   deploy_azure_monitor_solutions = {
     AgentHealthAssessment       = local.deploy_monitoring_resources && local.settings.log_analytics.config.enable_solution_for_agent_health_assessment
     AntiMalware                 = local.deploy_monitoring_resources && local.settings.log_analytics.config.enable_solution_for_anti_malware
-    AzureActivity               = local.deploy_monitoring_resources && local.settings.log_analytics.config.enable_solution_for_azure_activity
     ChangeTracking              = local.deploy_monitoring_resources && local.settings.log_analytics.config.enable_solution_for_change_tracking
     Security                    = local.deploy_monitoring_resources && local.settings.log_analytics.config.enable_sentinel
     SecurityInsights            = local.deploy_monitoring_resources && local.settings.log_analytics.config.enable_sentinel
@@ -101,16 +99,18 @@ locals {
     "${local.resource_group_resource_id}/providers/Microsoft.OperationalInsights/workspaces/${local.azurerm_log_analytics_workspace.name}"
   )
   azurerm_log_analytics_workspace = {
-    name                              = lookup(local.custom_settings_la_workspace, "name", "${local.resource_prefix}-la${local.resource_suffix}")
-    resource_group_name               = lookup(local.custom_settings_la_workspace, "resource_group_name", local.resource_group_name)
-    location                          = lookup(local.custom_settings_la_workspace, "location", local.location)
-    sku                               = lookup(local.custom_settings_la_workspace, "sku", "PerGB2018")
-    retention_in_days                 = lookup(local.custom_settings_la_workspace, "retention_in_days", local.settings.log_analytics.config.retention_in_days)
-    daily_quota_gb                    = lookup(local.custom_settings_la_workspace, "daily_quota_gb", null)
-    internet_ingestion_enabled        = lookup(local.custom_settings_la_workspace, "internet_ingestion_enabled", true)
-    internet_query_enabled            = lookup(local.custom_settings_la_workspace, "internet_query_enabled", true)
-    reservation_capcity_in_gb_per_day = lookup(local.custom_settings_la_workspace, "reservation_capcity_in_gb_per_day", null) # Requires version = "~> 2.48.0"
-    tags                              = lookup(local.custom_settings_la_workspace, "tags", local.tags)
+    name                               = lookup(local.custom_settings_la_workspace, "name", "${local.resource_prefix}-la${local.resource_suffix}")
+    resource_group_name                = lookup(local.custom_settings_la_workspace, "resource_group_name", local.resource_group_name)
+    location                           = lookup(local.custom_settings_la_workspace, "location", local.location)
+    allow_resource_only_permissions    = lookup(local.custom_settings_la_workspace, "allow_resource_only_permissions", true) # Available only in v3.36.0 onwards
+    sku                                = lookup(local.custom_settings_la_workspace, "sku", "PerGB2018")
+    retention_in_days                  = lookup(local.custom_settings_la_workspace, "retention_in_days", local.settings.log_analytics.config.retention_in_days)
+    daily_quota_gb                     = lookup(local.custom_settings_la_workspace, "daily_quota_gb", null)
+    cmk_for_query_forced               = lookup(local.custom_settings_la_workspace, "cmk_for_query_forced", null)
+    internet_ingestion_enabled         = lookup(local.custom_settings_la_workspace, "internet_ingestion_enabled", true)
+    internet_query_enabled             = lookup(local.custom_settings_la_workspace, "internet_query_enabled", true)
+    reservation_capacity_in_gb_per_day = lookup(local.custom_settings_la_workspace, "reservation_capacity_in_gb_per_day", null)
+    tags                               = lookup(local.custom_settings_la_workspace, "tags", local.tags)
   }
 }
 
@@ -157,12 +157,15 @@ locals {
     lookup(local.automation_account_location_map, local.location, local.location)
   )
   azurerm_automation_account = {
-    name                = lookup(local.custom_settings_aa, "name", "${local.resource_prefix}-automation${local.resource_suffix}")
-    resource_group_name = lookup(local.custom_settings_aa, "resource_group_name", local.resource_group_name)
-    location            = lookup(local.custom_settings_aa, "location", local.automation_account_location)
-    sku_name            = lookup(local.custom_settings_aa, "sku_name", "Basic")
-    identity            = lookup(local.custom_settings_aa, "identity", local.empty_list)
-    tags                = lookup(local.custom_settings_aa, "tags", local.tags)
+    name                          = lookup(local.custom_settings_aa, "name", "${local.resource_prefix}-automation${local.resource_suffix}")
+    resource_group_name           = lookup(local.custom_settings_aa, "resource_group_name", local.resource_group_name)
+    location                      = lookup(local.custom_settings_aa, "location", local.automation_account_location)
+    sku_name                      = lookup(local.custom_settings_aa, "sku_name", "Basic")
+    public_network_access_enabled = lookup(local.custom_settings_aa, "public_network_access_enabled", true)
+    local_authentication_enabled  = lookup(local.custom_settings_aa, "local_authentication_enabled", true)
+    identity                      = lookup(local.custom_settings_aa, "identity", local.empty_list)
+    encryption                    = lookup(local.custom_settings_aa, "encryption", local.empty_list)
+    tags                          = lookup(local.custom_settings_aa, "tags", local.tags)
   }
 }
 
@@ -199,19 +202,11 @@ locals {
           enableAscForSqlOnVm            = local.deploy_defender_for_sql_server_vms ? "DeployIfNotExists" : "Disabled"
           enableAscForStorage            = local.deploy_defender_for_storage ? "DeployIfNotExists" : "Disabled"
         }
-        Deploy-LX-Arc-Monitoring = {
-          logAnalytics = local.log_analytics_workspace_resource_id
-
-        }
         Deploy-VM-Monitoring = {
           logAnalytics_1 = local.log_analytics_workspace_resource_id
-
         }
         Deploy-VMSS-Monitoring = {
           logAnalytics_1 = local.log_analytics_workspace_resource_id
-        }
-        Deploy-WS-Arc-Monitoring = {
-          logAnalytics = local.log_analytics_workspace_resource_id
         }
         Deploy-AzActivity-Log = {
           logAnalytics = local.log_analytics_workspace_resource_id
@@ -221,11 +216,9 @@ locals {
         }
       }
       enforcement_mode = {
-        Deploy-MDFC-Config       = local.deploy_security_settings
-        Deploy-LX-Arc-Monitoring = local.deploy_monitoring_for_arc
-        Deploy-VM-Monitoring     = local.deploy_monitoring_for_vm
-        Deploy-VMSS-Monitoring   = local.deploy_monitoring_for_vmss
-        Deploy-WS-Arc-Monitoring = local.deploy_monitoring_for_arc
+        Deploy-MDFC-Config     = local.deploy_security_settings
+        Deploy-VM-Monitoring   = local.deploy_monitoring_for_vm
+        Deploy-VMSS-Monitoring = local.deploy_monitoring_for_vmss
       }
     }
     "${local.root_id}-management" = {

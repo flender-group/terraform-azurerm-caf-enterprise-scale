@@ -290,15 +290,29 @@ locals {
       archetype_config = {
         archetype_id   = value.archetype_config.archetype_id
         access_control = value.archetype_config.access_control
-        parameters = merge(
-          try(module.connectivity_resources.configuration.archetype_config_overrides[key].parameters, null),
-          try(module.identity_resources.configuration.archetype_config_overrides[key].parameters, null),
-          try(module.management_resources.configuration.archetype_config_overrides[key].parameters, null),
-          value.archetype_config.parameters,
-        )
+        parameters = {
+          # The following logic merges parameter values from the connectivity,
+          # identity and management sub-modules with the archetype defaults
+          # (including custom_landing_zones) and archetype_config_overrides.
+          # These values are then passed to the parameters input variable of the
+          # archetypes sub-module.
+          for policy_name in toset(keys(merge(
+            lookup(module.connectivity_resources.configuration.archetype_config_overrides, key, local.parameter_map_default).parameters,
+            lookup(module.identity_resources.configuration.archetype_config_overrides, key, local.parameter_map_default).parameters,
+            lookup(module.management_resources.configuration.archetype_config_overrides, key, local.parameter_map_default).parameters,
+            value.archetype_config.parameters,
+          ))) :
+          policy_name => merge(
+            lookup(lookup(module.connectivity_resources.configuration.archetype_config_overrides, key, local.parameter_map_default).parameters, policy_name, null),
+            lookup(lookup(module.identity_resources.configuration.archetype_config_overrides, key, local.parameter_map_default).parameters, policy_name, null),
+            lookup(lookup(module.management_resources.configuration.archetype_config_overrides, key, local.parameter_map_default).parameters, policy_name, null),
+            lookup(value.archetype_config.parameters, policy_name, null),
+          )
+        }
       }
     }
   }
+
 
   # Logic to determine which subscriptions to associate with Management Groups in relaxed mode.
   # Empty unless strict_subscription_association is set to false.
@@ -358,5 +372,16 @@ locals {
     for key, value in local.es_landing_zones_map :
     key => value
     if contains(keys(azurerm_management_group.level_5), try(length(value.parent_management_group_id) > 0, false) ? "${local.provider_path.management_groups}${value.parent_management_group_id}" : local.empty_string)
+  }
+}
+
+# The following local is used to build the list of Management Groups 
+# that will have Diagnostic Settings deployed, based on boolean varaible 
+# deploy_diagnostics_for_mg
+locals {
+  azapi_mg_diagnostics = {
+    for mg_id in keys(local.es_landing_zones_map) :
+    mg_id => ""
+    if local.deploy_diagnostics_for_mg
   }
 }

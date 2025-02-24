@@ -20,7 +20,7 @@ Unfortunately this is a product limitation, but should have minimal impact due t
 
 If you've already deployed the [Identity resources using default settings][wiki_deploy_identity_resources], you will be able to see the changes made when moving to this configuration.
 
-> IMPORTANT: Ensure the module version is set to the latest, and don't forget to run `terraform init -upgrade` if upgrading to a later version of the module.
+> **IMPORTANT:** Ensure the module version is set to the latest, and don't forget to run `terraform init -upgrade` if upgrading to a later version of the module.
 
 ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/Azure/terraform-azurerm-caf-enterprise-scale?style=flat&logo=github)
 
@@ -33,7 +33,7 @@ To make the code easier to maintain when extending your configuration, we recomm
 - [main.tf](#maintf)
 - [settings.identity.tf](#settingsidentitytf)
 
-> TIP: The exact number of resources created depends on the module configuration, but you can expect upwards of 180 resources to be created by the module for this example.
+> **TIP:** The exact number of resources created depends on the module configuration, but you can expect upwards of 180 resources to be created by the module for this example.
 
 ### `terraform.tf`
 
@@ -47,7 +47,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = ">= 3.0.2"
+      version = ">= 3.19.0"
     }
   }
 }
@@ -101,7 +101,7 @@ data "azurerm_client_config" "core" {}
 
 module "enterprise_scale" {
   source  = "Azure/caf-enterprise-scale/azurerm"
-  version = "2.4.1"
+  version = "<version>" # change this to your desired version, https://www.terraform.io/language/expressions/version-constraints
 
   providers = {
     azurerm              = azurerm
@@ -190,17 +190,11 @@ Looking for further inspiration? Why not try some of our other [examples][wiki_e
 [//]: # "INSERT LINK LABELS BELOW"
 [//]: # "************************"
 
-[wiki_management_resources]:         %5BUser-Guide%5D-Management-Resources "Wiki - Management Resources."
 [wiki_identity_resources]:           %5BUser-Guide%5D-Identity-Resources "Wiki - Identity Resources."
 [wiki_deploy_identity_resources]:    %5BExamples%5D-Deploy-Identity-Resources "Wiki - Deploy Identity Resources."
 [wiki_provider_configuration_multi]: %5BUser-Guide%5D-Provider-Configuration#multi-subscription-deployment "Wiki - Provider Configuration - Multi-Subscription deployment."
 [wiki_examples]:                     Examples "Wiki - Examples"
 
 [configure_identity_resources]: %5BVariables%5D-configure_identity_resources "Instructions for how to use the configure_identity_resources variable."
-[deploy_identity_resources]:    %5BVariables%5D-deploy_identity_resources "Instructions for how to use the deploy_identity_resources variable."
-[subscription_id_identity]:     %5BVariables%5D-subscription_id_identity "Instructions for how to use the subscription_id_identity variable."
-[default_location]:             %5BVariables%5D-default_location "Instructions for how to use the default_location variable."
 [archetype_exclusions]:         %5BExamples%5D-Expand-Built-in-Archetype-Definitions#to-enable-the-exclusion-function "Wiki - Expand Built-in Archetype Definitions # To enable the exclusion function"
 [custom_archetypes]:            %5BUser-Guide%5D-Archetype-Definitions "[User Guide] Archetype Definitions"
-
-[azure_tag_support]: https://docs.microsoft.com/azure/azure-resource-manager/management/tag-support "Tag support for Azure resources"

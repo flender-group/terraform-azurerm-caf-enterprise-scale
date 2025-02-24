@@ -20,6 +20,7 @@ locals {
   deploy_management_resources      = var.deploy_management_resources
   deploy_identity_resources        = var.deploy_identity_resources
   deploy_connectivity_resources    = var.deploy_connectivity_resources
+  deploy_diagnostics_for_mg        = var.deploy_diagnostics_for_mg
   configure_management_resources   = var.configure_management_resources
   configure_identity_resources     = var.configure_identity_resources
   configure_connectivity_resources = var.configure_connectivity_resources
@@ -78,6 +79,9 @@ locals {
     local.create_object,
     coalesce(local.configure_management_resources.advanced, local.empty_map)
   )
+  parameter_map_default = {
+    parameters = local.empty_map
+  }
 }
 
 # The following locals are used to define a set of module
@@ -90,11 +94,13 @@ locals {
   }
   connectivity_resources_tags = merge(
     local.disable_base_module_tags ? local.empty_map : local.base_module_tags,
-    coalesce(local.configure_connectivity_resources.tags, local.default_tags),
+    local.default_tags,
+    local.configure_connectivity_resources.tags,
   )
   management_resources_tags = merge(
     local.disable_base_module_tags ? local.empty_map : local.base_module_tags,
-    coalesce(local.configure_management_resources.tags, local.default_tags),
+    local.default_tags,
+    local.configure_management_resources.tags,
   )
 }
 
@@ -128,38 +134,35 @@ locals {
   # regex_scope_is_resource         = "(?i)(/subscriptions/[^/]+/resourceGroups(?:/[^/]+){4}/)([^/]+)$"
 }
 
-# The following locals are used to identify known
-# sensitive attributes generated when resources
-# are created
-locals {
-  sensitive_attributes = {
-    azurerm_log_analytics_workspace = [
-      "primary_shared_key",
-      "secondary_shared_key",
-    ]
-  }
-}
-
 # The following locals are used to control time_sleep
 # delays between resources to reduce transient errors
 # relating to replication delays in Azure
 locals {
-  default_create_duration_delay  = "30s"
-  default_destroy_duration_delay = "0s"
   create_duration_delay = {
-    after_azurerm_management_group      = lookup(var.create_duration_delay, "azurerm_management_group", local.default_create_duration_delay)
-    after_azurerm_policy_assignment     = lookup(var.create_duration_delay, "azurerm_policy_assignment", local.default_create_duration_delay)
-    after_azurerm_policy_definition     = lookup(var.create_duration_delay, "azurerm_policy_definition", local.default_create_duration_delay)
-    after_azurerm_policy_set_definition = lookup(var.create_duration_delay, "azurerm_policy_set_definition", local.default_create_duration_delay)
-    after_azurerm_role_assignment       = lookup(var.create_duration_delay, "azurerm_role_assignment", local.default_create_duration_delay)
-    after_azurerm_role_definition       = lookup(var.create_duration_delay, "azurerm_role_definition", local.default_create_duration_delay)
+    after_azurerm_management_group      = var.create_duration_delay["azurerm_management_group"]
+    after_azurerm_policy_assignment     = var.create_duration_delay["azurerm_policy_assignment"]
+    after_azurerm_policy_definition     = var.create_duration_delay["azurerm_policy_definition"]
+    after_azurerm_policy_set_definition = var.create_duration_delay["azurerm_policy_set_definition"]
+    after_azurerm_role_assignment       = var.create_duration_delay["azurerm_role_assignment"]
+    after_azurerm_role_definition       = var.create_duration_delay["azurerm_role_definition"]
   }
   destroy_duration_delay = {
-    after_azurerm_management_group      = lookup(var.destroy_duration_delay, "azurerm_management_group", local.default_destroy_duration_delay)
-    after_azurerm_policy_assignment     = lookup(var.destroy_duration_delay, "azurerm_policy_assignment", local.default_destroy_duration_delay)
-    after_azurerm_policy_definition     = lookup(var.destroy_duration_delay, "azurerm_policy_definition", local.default_destroy_duration_delay)
-    after_azurerm_policy_set_definition = lookup(var.destroy_duration_delay, "azurerm_policy_set_definition", local.default_destroy_duration_delay)
-    after_azurerm_role_assignment       = lookup(var.destroy_duration_delay, "azurerm_role_assignment", local.default_destroy_duration_delay)
-    after_azurerm_role_definition       = lookup(var.destroy_duration_delay, "azurerm_role_definition", local.default_destroy_duration_delay)
+    after_azurerm_management_group      = var.destroy_duration_delay["azurerm_management_group"]
+    after_azurerm_policy_assignment     = var.destroy_duration_delay["azurerm_policy_assignment"]
+    after_azurerm_policy_definition     = var.destroy_duration_delay["azurerm_policy_definition"]
+    after_azurerm_policy_set_definition = var.destroy_duration_delay["azurerm_policy_set_definition"]
+    after_azurerm_role_assignment       = var.destroy_duration_delay["azurerm_role_assignment"]
+    after_azurerm_role_definition       = var.destroy_duration_delay["azurerm_role_definition"]
   }
+}
+
+# The follow locals are used to control non-compliance messages
+locals {
+  policy_non_compliance_message_enabled                   = var.policy_non_compliance_message_enabled
+  policy_non_compliance_message_not_supported_definitions = var.policy_non_compliance_message_not_supported_definitions
+  policy_non_compliance_message_default_enabled           = var.policy_non_compliance_message_default_enabled
+  policy_non_compliance_message_default                   = var.policy_non_compliance_message_default
+  policy_non_compliance_message_enforcement_placeholder   = var.policy_non_compliance_message_enforcement_placeholder
+  policy_non_compliance_message_enforced_replacement      = var.policy_non_compliance_message_enforced_replacement
+  policy_non_compliance_message_not_enforced_replacement  = var.policy_non_compliance_message_not_enforced_replacement
 }

@@ -25,7 +25,7 @@ We will update the built-in configuration following these steps:
 
 - Enable the role assignment override with `custom_policy_roles`
 
-> IMPORTANT: Ensure the module version is set to the latest, and don't forget to run `terraform init` if upgrading to a later version of the module..
+> **IMPORTANT:** Ensure the module version is set to the latest, and don't forget to run `terraform init` if upgrading to a later version of the module..
 
 ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/Azure/terraform-azurerm-caf-enterprise-scale?style=flat&logo=github)
 
@@ -52,7 +52,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = ">= 3.0.2"
+      version = ">= 3.19.0"
     }
   }
 }
@@ -103,7 +103,7 @@ data "azurerm_client_config" "core" {}
 
 module "enterprise_scale" {
   source  = "Azure/caf-enterprise-scale/azurerm"
-  version = "2.4.1"
+  version = "<version>" # change this to your desired version, https://www.terraform.io/language/expressions/version-constraints
 
   providers = {
     azurerm              = azurerm
@@ -182,6 +182,11 @@ In the subdirectory `policy_assignments` create a `policy_assignment_dhh_policy_
       }
     },
     "policyDefinitionId": "/providers/Microsoft.Authorization/policySetDefinitions/a169a624-5599-4385-a696-c8d643089fab",
+    "nonComplianceMessages": [
+      {
+        "message": "HITRUST/HIPAA controls audit and virtual machine extensions {enforcementMode} be deployed."
+      }
+    ],
     "scope": "${current_scope_resource_id}"
   },
   "location": "${default_location}",
@@ -213,6 +218,11 @@ In the subdirectory `policy_assignments` create a `policy_assignment_dsa_policy_
       }
     },
     "policyDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/f4c68484-132f-41f9-9b6d-3e4b1cb55036",
+    "nonComplianceMessages": [
+      {
+        "message": "SQL auditing {enforcementMode} be configured."
+      }
+    ],
     "scope": "${current_scope_resource_id}"
   },
   "location": "${default_location}",
@@ -222,7 +232,7 @@ In the subdirectory `policy_assignments` create a `policy_assignment_dsa_policy_
 }
 ```
 
-> IMPORTANT: Please ensure you create this file in the `/lib` directory within your root module.
+> **IMPORTANT:** Please ensure you create this file in the `/lib` directory within your root module.
 
 ### `lib/archetype_definitions/archetype_definition_customer_online.json`
 
@@ -251,7 +261,7 @@ To map a Role Definition against the Policy Assignments we need to assign the ro
 This is the definition of the variable `custom_policy_roles` and the theoretical expected values:
 
 ```hcl
-custom_policy_roles= {
+custom_policy_roles = {
   policy_definition_resource_id_1 = [
     "role_definition_resource_id_1",
     "role_definition_resource_id_2",
@@ -265,15 +275,15 @@ custom_policy_roles= {
 For this example the`custom_policy_roles` is this:
 
 ```hcl
-  custom_policy_roles = {
-    "/providers/Microsoft.Authorization/policySetDefinitions/a169a624-5599-4385-a696-c8d643089fab" = [
-      "/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c",
-      "/providers/Microsoft.Authorization/roleDefinitions/4d97b98b-1d4f-4787-a291-c67834d212e7"
-    ],
-    "/providers/Microsoft.Authorization/policyDefinitions/f4c68484-132f-41f9-9b6d-3e4b1cb55036" = [
-      "/providers/Microsoft.Authorization/roleDefinitions/8e3af657-a8ff-443c-a75c-2fe8c4bcb635"
-    ]
-  }
+custom_policy_roles = {
+  "/providers/Microsoft.Authorization/policySetDefinitions/a169a624-5599-4385-a696-c8d643089fab" = [
+    "/providers/Microsoft.Authorization/roleDefinitions/b24988ac-6180-42a0-ab88-20f7382dd24c",
+    "/providers/Microsoft.Authorization/roleDefinitions/4d97b98b-1d4f-4787-a291-c67834d212e7"
+  ],
+  "/providers/Microsoft.Authorization/policyDefinitions/f4c68484-132f-41f9-9b6d-3e4b1cb55036" = [
+    "/providers/Microsoft.Authorization/roleDefinitions/8e3af657-a8ff-443c-a75c-2fe8c4bcb635"
+  ]
+}
 ```
 
 ## Override Module Role Assignments
